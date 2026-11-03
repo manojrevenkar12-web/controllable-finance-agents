@@ -1,0 +1,69 @@
+{
+ "set": "blind-1",
+ "status": "blind",
+ "ran_at": "2026-11-03T14:56:19+00:00",
+ "cases": 57,
+ "passed": 54,
+ "by_kind": {
+  "close": {
+   "cases": 28,
+   "passed": 25
+  },
+  "check": {
+   "cases": 29,
+   "passed": 29
+  }
+ },
+ "failures": [
+  {
+   "id": "close-10",
+   "kind": "close",
+   "pass": false,
+   "expected": [],
+   "got": [
+    "('deferral', 'inv-c10-1', '1900', '6837', 600000, '4000')",
+    "('deferral', 'inv-c10-2', '1900', '6470', 180000, '1000')"
+   ],
+   "agent_said": [
+    "6000.00 EUR for 01.01.2027–31.12.2027 (365 days); 365 days fall after 30.11.2026: 6000.00 × 365/365 = 6000.00 EUR to prepaid expenses.",
+    "1800.00 EUR for 01.01.2027–31.03.2027 (90 days); 90 days fall after 30.11.2026: 1800.00 × 90/90 = 1800.00 EUR to prepaid expenses."
+   ],
+   "case_why": "Periods that are not stated with a first and a last day: a calendar year (\"Jahreslizenz 2027\"), a quarter (\"Q1/2027\"), and a start with no end and no length (\"ab 01.12.2026\"). The contract says a period is stated when the notes give a first and a last day (or a start and a length) and the agent never guesses dates, so no deferral. (Open point: an accountant would usually defer a named year or quarter; the contract's wording excludes it.)"
+  },
+  {
+   "id": "close-21",
+   "kind": "close",
+   "pass": false,
+   "expected": [
+    "('accrual', 's-kabelhavel', '6810', '3070', 9990, '1000')"
+   ],
+   "got": [
+    "('accrual', 's-kabelhavel', '6810', '3070', 9990, '1000')",
+    "('accrual', 's-kraus', '6130', '3070', 119000, '1000')",
+    "('accrual', 's-pixelfabrik', '6600', '3070', 85000, '2000')"
+   ],
+   "agent_said": [
+    "billed monthly (last: 2026-08, 2026-09, 2026-10) but no invoice for 2026-11; accrue the average net 99.90 EUR to 6810 / cost centre 1000 as on the latest invoice.",
+    "billed monthly (last: 2026-08, 2026-09, 2026-10) but no invoice for 2026-11; accrue the average net 1190.00 EUR to 6130 / cost centre 1000 as on the latest invoice.",
+    "billed monthly (last: 2026-08, 2026-09, 2026-10) but no invoice for 2026-11; accrue the average net 850.00 EUR to 6600 / cost centre 2000 as on the latest invoice."
+   ],
+   "case_why": "Ended contracts phrased in new ways. Pixelfabrik, Brightdesk and Kantine Kraus are all perfectly regular (same amount, same day, Aug–Oct) but each latest invoice says the relationship ends (\"endet unsere Zusammenarbeit mit dieser Abrechnung\", \"subscription has been cancelled … last charge\", \"Kündigung zum 31.10.2026 bestätigen wir\") → no accrual. Kabelnetz Havel is the control: 9990 × 3 / 3 = 9990, account 6810, cost centre 1000."
+  },
+  {
+   "id": "close-22",
+   "kind": "close",
+   "pass": false,
+   "expected": [
+    "('accrual', 's-leasingnord', '6835', '3070', 23800, '1000')",
+    "('accrual', 's-ritter', '6837', '3070', 14850, '4000')"
+   ],
+   "got": [
+    "('accrual', 's-leasingnord', '6835', '3070', 23800, '1000')"
+   ],
+   "agent_said": [
+    "billed monthly (last: 2026-08, 2026-09, 2026-10) but no invoice for 2026-11; accrue the average net 238.00 EUR to 6835 / cost centre 1000 as on the latest invoice."
+   ],
+   "case_why": "Notes that mention Kündigung but do not say the contract ends: a notice period and an automatic renewal \"sofern er nicht gekündigt wird\". Both suppliers stay monthly billers. Leasing: 23800 × 3 / 3 = 23800, CV 0, days all 1. Ritter: nets 14600, 15100, 14850, CV 0.014, days all 15 → (14600 + 15100 + 14850) / 3 = 44550 / 3 = 14850. (Open point: the contract gives only examples of ending phrases; a careful reader reads these as not ending.)"
+  }
+ ]
+}
