@@ -10,7 +10,8 @@ telephone) still delivered: accrue the average of the last three net amounts to 
 the latest invoice, unless the latest invoice says the contract ended.
 
 Service periods are read by rules for the usual ways of writing them; a note that mentions dates the rules do
-not understand goes to the model, whose answer is checked (a real date range, start before end) before use.
+not understand goes to the model. Its answer is used only when both ends are written in the notes (or the start
+and a stated length are): the model reads the notes, it never supplies a date.
 """
 
 from __future__ import annotations
@@ -94,6 +95,87 @@ def parse_period(notes: str) -> tuple[dt.date, dt.date] | None:
     return None
 
 
+NUMBER_WORDS = {
+    w: i
+    for i, ws in enumerate(
+        [
+            ("one", "ein", "eine", "einen"),
+            ("two", "zwei"),
+            ("three", "drei"),
+            ("four", "vier"),
+            ("five", "fünf"),
+            ("six", "sechs"),
+            ("seven", "sieben"),
+            ("eight", "acht"),
+            ("nine", "neun"),
+            ("ten", "zehn"),
+            ("eleven", "elf"),
+            ("twelve", "zwölf"),
+        ],
+        1,
+    )
+    for w in ws
+}
+MONTH_NAMES = {
+    **MONTHS_DE,
+    **{k: v for k, v in MONTHS_EN.items()},
+    "maerz": 3,
+    "mrz": 3,
+    "okt": 10,
+    "dez": 12,
+    "mai": 5,
+}
+
+
+def _month_no(name: str) -> int | None:
+    n = name.lower().rstrip(".")
+    return MONTH_NAMES.get(n) or MONTH_NAMES.get(n[:3])
+
+
+def _date(y: int, m: int | None, d: int) -> dt.date | None:
+    if m is None:
+        return None
+    try:
+        return dt.date(y + 2000 if y < 100 else y, m, d)
+    except ValueError:
+        return None
+
+
+def written_dates(notes: str) -> set[dt.date]:
+    """Every calendar date written out in the notes, in German, English or ISO form."""
+    found: list[dt.date | None] = []
+    for m in re.finditer(r"(?<!\d)(\d{1,2})\.(\d{1,2})\.(\d{4}|\d{2})(?!\d)", notes):
+        found.append(_date(int(m[3]), int(m[2]), int(m[1])))
+    for m in re.finditer(r"(\d{4})-(\d{2})-(\d{2})", notes):
+        found.append(_date(int(m[1]), int(m[2]), int(m[3])))
+    for m in re.finditer(r"\b([A-Za-zäÄ]{3,9})\.? (\d{1,2}),? (\d{4})", notes):  # Nov 1, 2026
+        found.append(_date(int(m[3]), _month_no(m[1]), int(m[2])))
+    for m in re.finditer(r"(?<!\d)(\d{1,2})\.? ([A-Za-zäÄ]{3,9})\.? (\d{4})", notes):  # 1 November 2026, 1. März 2027
+        found.append(_date(int(m[3]), _month_no(m[2]), int(m[1])))
+    return {d for d in found if d}
+
+
+def stated_lengths(notes: str) -> set[int]:
+    """Lengths in months the notes state: "12 Monate", "24-month", "two-year", "zwei Jahre"."""
+    out = set()
+    for m in re.finditer(r"\b(\d{1,2}|[a-zäöü]+)[- ]?(month|monat|year|jahr)", notes, re.IGNORECASE):
+        n = int(m[1]) if m[1].isdigit() else NUMBER_WORDS.get(m[1].lower())
+        if n:
+            out.add(n * (12 if m[2].lower() in ("year", "jahr") else 1))
+    return out
+
+
+def stated_in(period: tuple[dt.date, dt.date], notes: str) -> bool:
+    """True when the notes write both ends of the period, or its start and a length that ends where it ends."""
+    start, stop = period
+    dates = written_dates(notes)
+    if start not in dates:
+        return False
+    if stop in dates:
+        return True
+    return any(add_months(start, n) - dt.timedelta(days=1) == stop for n in stated_lengths(notes))
+
+
 DATEISH = re.compile(
     r"\d{1,2}\.\d{1,2}\.\d{2,4}|\d{4}-\d{2}-\d{2}|\b(?:19|20)\d{2}\b|monat|month|jahr|year", re.IGNORECASE
 )
@@ -122,7 +204,7 @@ def ask_period(notes: str, invoice_date: str) -> tuple[tuple[dt.date, dt.date] |
     try:
         if out.get("has_period") and out.get("confidence", 0) >= 0.6:
             a, b = dt.date.fromisoformat(out["start"]), dt.date.fromisoformat(out["end"])
-            if a <= b and (b - a).days <= 366 * 5:
+            if a <= b and (b - a).days <= 366 * 5 and stated_in((a, b), notes):
                 return (a, b), cost
     except (ValueError, TypeError):
         pass
@@ -166,9 +248,14 @@ class CloseResult:
 
 
 def ended(notes: str) -> bool:
-    words = config.load("agents")["close"]["cancellation_words"]
-    low = notes.lower()
-    return any(w.lower() in low for w in words)
+    """True when a clause of the notes says the contract ends, and that clause is not a condition or a notice
+    period ("renews automatically unless cancelled", "Kündigungsfrist 3 Monate")."""
+    cfg = config.load("agents")["close"]["contract_end"]
+    for clause in re.split(r"(?<!\d)[.;!?](?!\d)|\s[–—-]\s", notes):
+        low = clause.lower()
+        if any(re.search(p, low) for p in cfg["says_ended"]) and not any(re.search(p, low) for p in cfg["unless"]):
+            return True
+    return False
 
 
 def close_month(

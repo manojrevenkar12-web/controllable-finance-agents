@@ -39,7 +39,12 @@ close:
   recurring_gap_months: 1        # ... allowing this many months without an invoice (accrued at the time) ...
   recurring_max_variation: 0.25  # ... with similar amounts (coefficient of variation) ...
   recurring_max_day_spread: 10   # ... on similar days of the month = recurring
-  cancellation_words: [gekündigt, letzte Rechnung, Vertragsende, contract ends, final invoice, cancelled]
+  contract_end:                  # a clause of the latest invoice's notes says the contract ends (no accrual) ...
+    says_ended: ['gekündigt', 'kündigung zum', 'letzte (rechnung|abrechnung)', 'vertragsende', '\b(be)?endet\b',
+                 'contract (ends|ended|terminated)', '\b(final|last) (invoice|charge|bill)\b', '\bcancell?ed\b',
+                 '\bterminated\b']
+    unless: ['\bsofern\b', '\bfalls\b', '\bwenn\b', '\bunless\b', '\bif\b', 'kündigungsfrist', 'notice period',
+             'verlängert sich', '\brenews?\b', 'automatisch', 'automatic']   # ... unless that clause is a condition
   llm:
     enabled: true
     model: haiku

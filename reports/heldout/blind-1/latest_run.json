@@ -1,0 +1,18 @@
+{
+ "set": "blind-1",
+ "status": "regression",
+ "ran_at": "2026-11-03T14:59:07+00:00",
+ "cases": 57,
+ "passed": 57,
+ "by_kind": {
+  "close": {
+   "cases": 28,
+   "passed": 28
+  },
+  "check": {
+   "cases": 29,
+   "passed": 29
+  }
+ },
+ "failures": []
+}

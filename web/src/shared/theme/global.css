@@ -404,5 +404,10 @@ output.status {
     padding: var(--space-5) var(--space-4);
   }
 }
-.list > * { min-width: 0; }
-.card { min-width: 0; overflow-wrap: anywhere; }
+.list > * {
+  min-width: 0;
+}
+.card {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}

@@ -6,7 +6,7 @@ from hypothesis import given
 from hypothesis import strategies as st
 
 from cfa.agents.checks import Checker, normalise_number, valid_iban
-from cfa.agents.close import close_month, parse_period
+from cfa.agents.close import close_month, ended, parse_period, stated_in
 from cfa.agents.coding import CompanyModel, item_key, noted_centre, tax_key, wilson_lower
 
 PEOPLE = [{"id": "u1", "department": "ENG"}, {"id": "u2", "department": "SALES"}]
@@ -152,6 +152,32 @@ def test_periods_written_the_usual_ways_are_read(start, days):
 def test_period_in_months():
     assert parse_period("Laufzeit 12 Monate ab dem 15.11.2026") == (dt.date(2026, 11, 15), dt.date(2027, 11, 14))
     assert parse_period("Leistungszeitraum 11/2026") is None
+
+
+def test_a_model_period_is_used_only_when_the_notes_write_it():
+    d = dt.date
+    assert stated_in((d(2026, 11, 1), d(2028, 10, 31)), "Two-year licence. 24-month term commencing 1 November 2026.")
+    assert stated_in((d(2026, 12, 1), d(2027, 5, 31)), "Term: December 1, 2026 through May 31, 2027.")
+    assert stated_in((d(2026, 11, 15), d(2027, 2, 14)), "Abo-Zeitraum 15.11.26 - 14.02.27")
+    assert stated_in((d(2027, 3, 1), d(2028, 2, 29)), "Zwölf Monate ab 1. März 2027")
+    # a year, a quarter, or a start without an end or a length: the model would be guessing
+    assert not stated_in((d(2027, 1, 1), d(2027, 12, 31)), "Jahreslizenz 2027 CAD-Software")
+    assert not stated_in((d(2027, 1, 1), d(2027, 3, 31)), "Wartungspauschale Q1/2027")
+    assert not stated_in((d(2026, 12, 1), d(2027, 11, 30)), "Firmenfitness, Leistungszeitraum ab 01.12.2026")
+    assert not stated_in((d(2026, 12, 1), d(2027, 11, 30)), "ab 01.12.2026, 6 Monate Mindestlaufzeit")
+
+
+def test_a_contract_ends_when_a_clause_says_so_not_when_it_mentions_cancelling():
+    assert ended("Leistungszeitraum 10/2026. Vertrag gekündigt zum 31.10.2026 – dies ist die letzte Rechnung.")
+    assert ended("Wie besprochen endet unsere Zusammenarbeit mit dieser Abrechnung.")
+    assert ended("Your subscription has been cancelled as requested; this is the last charge to your account.")
+    assert ended("Ihre Kündigung zum 31.10.2026 bestätigen wir hiermit.")
+    assert not ended("Leasingrate 10/2026. Kündigungsfrist: 3 Monate zum Quartalsende.")
+    assert not ended(
+        "Ihr Vertrag verlängert sich automatisch um 12 Monate, sofern er nicht fristgerecht gekündigt wird."
+    )
+    assert not ended("Your plan renews monthly unless cancelled.")
+    assert not ended("Internet Business 500, 10/2026")
 
 
 def test_deferral_is_day_based_and_respects_materiality():

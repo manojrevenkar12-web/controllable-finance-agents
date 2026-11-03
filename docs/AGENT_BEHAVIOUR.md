@@ -29,7 +29,10 @@ A period is stated when the notes give a first and a last day, in any of the way
 dates (`01.11.2026 – 31.10.2027`, `vom … bis …`), English (`Nov 1, 2026 to Oct 31, 2027`), ISO
 (`2026-11-01 – 2027-10-31`), or a start and a length (`Laufzeit 12 Monate ab dem 15.11.2026`: 15.11.2026 to
 14.11.2027). A note that names only one month (`Leistungszeitraum 11/2026`) states no period beyond the month.
-A note that does not state a period clearly gets no deferral: the agent never guesses dates.
+A note that does not state a period clearly gets no deferral: the agent never guesses dates. A named year or
+quarter (`Jahreslizenz 2027`, `Q1/2027`) or a start with neither an end nor a length (`ab 01.12.2026`) is not a
+stated period. Two-digit years (`15.11.26 – 14.02.27`) and written-out months (`1 November 2026`,
+`December 1, 2026`) are dates like any other.
 
 ### Accruals (invoices not yet received)
 
@@ -45,7 +48,9 @@ it billed, and billed in at least two of the three; and its three latest invoice
 coefficient of variation of their nets, population standard deviation over mean, is at most 0.25) and dates (their
 days of the month are at most 10 apart). No accrual is proposed when the supplier already
 billed this month, or when its latest invoice says the contract ends (for example "Vertrag gekündigt", "letzte
-Rechnung", "contract ends", "final invoice").
+Rechnung", "contract ends", "final invoice", or any other wording that says so). A notice period ("Kündigungsfrist
+3 Monate") or a renewal unless cancelled ("verlängert sich automatisch, sofern nicht gekündigt") does not end the
+contract.
 
 ## Pre-payment checks
 
