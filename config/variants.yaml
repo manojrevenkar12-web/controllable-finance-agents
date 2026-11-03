@@ -1,0 +1,15 @@
+# Candidate versions of the agents: each is production (config/agents.yaml) with these settings changed.
+# `cfa release <variant>` runs it and production on the test split and applies config/gates.yaml.
+variants:
+  no-recency:
+    description: Treats a booking from last November like one from last week (no decay).
+    overrides: { coding: { half_life_days: 100000, version: 3 } }
+  ignore-notes:
+    description: Does not read cost-centre notes on the invoice.
+    overrides: { coding: { read_notes: false, version: 3 } }
+  iban-from-history:
+    description: Compares bank details with earlier invoices instead of the verified supplier master.
+    overrides: { checks: { bank_details: history, version: 2 } }
+  no-model:
+    description: Never asks the model; lines without a pattern go to a person.
+    overrides: { coding: { llm: { enabled: false } }, close: { llm: { enabled: false } } }

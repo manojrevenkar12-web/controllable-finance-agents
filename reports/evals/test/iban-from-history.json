@@ -1,0 +1,170 @@
+{
+ "documents": 663,
+ "coding": {
+  "account_accuracy": {
+   "value": 0.9793174767321613,
+   "low": 0.9700103412616339,
+   "high": 0.9875904860392968,
+   "k": 947,
+   "n": 967
+  },
+  "auto_or_suggested": {
+   "value": 0.9622926093514329,
+   "low": 0.947209653092006,
+   "high": 0.975867269984917,
+   "k": 638,
+   "n": 663
+  },
+  "cost_centre_accuracy": {
+   "value": 0.9927611168562565,
+   "low": 0.9865563598759048,
+   "high": 0.9979317476732161,
+   "k": 960,
+   "n": 967
+  },
+  "coverage_ready": {
+   "value": 0.6289592760180995,
+   "low": 0.5912518853695324,
+   "high": 0.665158371040724,
+   "k": 417,
+   "n": 663
+  },
+  "document_accuracy": {
+   "value": 0.9655172413793104,
+   "low": 0.95141065830721,
+   "high": 0.9796238244514106,
+   "k": 616,
+   "n": 638
+  },
+  "line_accuracy": {
+   "value": 0.9720785935884177,
+   "low": 0.9607032057911065,
+   "high": 0.9813857290589452,
+   "k": 940,
+   "n": 967
+  },
+  "line_accuracy_pattern": {
+   "value": 0.9720785935884177,
+   "low": 0.9607032057911065,
+   "high": 0.9813857290589452,
+   "k": 940,
+   "n": 967
+  },
+  "new_supplier_accuracy": {
+   "value": 1.0,
+   "low": 1.0,
+   "high": 1.0,
+   "k": 29,
+   "n": 29
+  },
+  "new_supplier_suggested": {
+   "value": 0.5370370370370371,
+   "low": 0.4074074074074074,
+   "high": 0.6666666666666666,
+   "k": 29,
+   "n": 54
+  },
+  "precision_ready": {
+   "value": 0.9808153477218226,
+   "low": 0.9664268585131894,
+   "high": 0.9928057553956835,
+   "k": 409,
+   "n": 417
+  },
+  "precision_review": {
+   "value": 0.9366515837104072,
+   "low": 0.9049773755656109,
+   "high": 0.9639140271493206,
+   "k": 207,
+   "n": 221
+  },
+  "tax_key_accuracy": {
+   "value": 1.0,
+   "low": 1.0,
+   "high": 1.0,
+   "k": 967,
+   "n": 967
+  },
+  "buckets": {
+   "review": 221,
+   "ready": 417,
+   "person": 25
+  }
+ },
+ "checks": {
+  "duplicate": {
+   "tp": 22,
+   "fp": 0,
+   "fn": 0,
+   "precision": 1.0,
+   "recall": 1.0
+  },
+  "iban_changed": {
+   "tp": 14,
+   "fp": 53,
+   "fn": 2,
+   "precision": 0.208955223880597,
+   "recall": 0.875
+  },
+  "vat_rate_wrong": {
+   "tp": 12,
+   "fp": 0,
+   "fn": 2,
+   "precision": 1.0,
+   "recall": 0.8571428571428571
+  },
+  "reverse_charge_missing": {
+   "tp": 17,
+   "fp": 0,
+   "fn": 0,
+   "precision": 1.0,
+   "recall": 1.0
+  },
+  "arithmetic": {
+   "tp": 21,
+   "fp": 0,
+   "fn": 0,
+   "precision": 1.0,
+   "recall": 1.0
+  },
+  "all": {
+   "tp": 86,
+   "fp": 53,
+   "fn": 4,
+   "precision": 0.6187050359712231,
+   "recall": 0.9555555555555556,
+   "decoys": 58,
+   "decoy_false_alarms": 52
+  }
+ },
+ "close": {
+  "deferral": {
+   "tp": 51,
+   "fp": 0,
+   "fn": 3,
+   "precision": 1.0,
+   "recall": 0.9444444444444444
+  },
+  "accrual": {
+   "tp": 7,
+   "fp": 0,
+   "fn": 0,
+   "precision": 1.0,
+   "recall": 1.0
+  },
+  "cancelled_accrued": 0,
+  "near_misses": []
+ },
+ "split": "test",
+ "month": "2026-12",
+ "agent": "iban-from-history",
+ "operational": {
+  "llm_calls": 0,
+  "cost_usd": 0.0,
+  "seconds": 10.1,
+  "p50_ms_per_document": 7.792000000000001,
+  "p95_ms_per_document": 16.0,
+  "periods_by_rules": 53,
+  "periods_by_model": 0
+ }
+}

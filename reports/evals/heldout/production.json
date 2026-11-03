@@ -1,0 +1,177 @@
+{
+ "documents": 670,
+ "coding": {
+  "account_accuracy": {
+   "value": 0.9801047120418848,
+   "low": 0.9706806282722513,
+   "high": 0.9884816753926702,
+   "k": 936,
+   "n": 955
+  },
+  "auto_or_suggested": {
+   "value": 0.9641791044776119,
+   "low": 0.9507462686567164,
+   "high": 0.9776119402985075,
+   "k": 646,
+   "n": 670
+  },
+  "cost_centre_accuracy": {
+   "value": 0.9926701570680628,
+   "low": 0.9863874345549738,
+   "high": 0.9979057591623036,
+   "k": 948,
+   "n": 955
+  },
+  "coverage_ready": {
+   "value": 0.6074626865671642,
+   "low": 0.5701492537313433,
+   "high": 0.6447761194029851,
+   "k": 407,
+   "n": 670
+  },
+  "document_accuracy": {
+   "value": 0.9659442724458205,
+   "low": 0.9520123839009288,
+   "high": 0.978328173374613,
+   "k": 624,
+   "n": 646
+  },
+  "line_accuracy": {
+   "value": 0.9738219895287958,
+   "low": 0.9633507853403142,
+   "high": 0.9832460732984293,
+   "k": 930,
+   "n": 955
+  },
+  "line_accuracy_model": {
+   "value": 0.36363636363636365,
+   "low": 0.09090909090909091,
+   "high": 0.6363636363636364,
+   "k": 4,
+   "n": 11
+  },
+  "line_accuracy_pattern": {
+   "value": 0.9809322033898306,
+   "low": 0.9724311440677966,
+   "high": 0.989406779661017,
+   "k": 926,
+   "n": 944
+  },
+  "new_supplier_accuracy": {
+   "value": 0.8431372549019608,
+   "low": 0.7450980392156863,
+   "high": 0.9411764705882353,
+   "k": 43,
+   "n": 51
+  },
+  "new_supplier_suggested": {
+   "value": 0.68,
+   "low": 0.5733333333333334,
+   "high": 0.7866666666666666,
+   "k": 51,
+   "n": 75
+  },
+  "precision_ready": {
+   "value": 0.9852579852579852,
+   "low": 0.972911547911548,
+   "high": 0.995085995085995,
+   "k": 401,
+   "n": 407
+  },
+  "precision_review": {
+   "value": 0.9330543933054394,
+   "low": 0.899581589958159,
+   "high": 0.9623430962343096,
+   "k": 223,
+   "n": 239
+  },
+  "tax_key_accuracy": {
+   "value": 1.0,
+   "low": 1.0,
+   "high": 1.0,
+   "k": 955,
+   "n": 955
+  },
+  "buckets": {
+   "ready": 407,
+   "review": 239,
+   "person": 24
+  }
+ },
+ "checks": {
+  "duplicate": {
+   "tp": 21,
+   "fp": 0,
+   "fn": 0,
+   "precision": 1.0,
+   "recall": 1.0
+  },
+  "iban_changed": {
+   "tp": 21,
+   "fp": 0,
+   "fn": 0,
+   "precision": 1.0,
+   "recall": 1.0
+  },
+  "vat_rate_wrong": {
+   "tp": 15,
+   "fp": 0,
+   "fn": 4,
+   "precision": 1.0,
+   "recall": 0.7894736842105263
+  },
+  "reverse_charge_missing": {
+   "tp": 14,
+   "fp": 0,
+   "fn": 0,
+   "precision": 1.0,
+   "recall": 1.0
+  },
+  "arithmetic": {
+   "tp": 16,
+   "fp": 0,
+   "fn": 0,
+   "precision": 1.0,
+   "recall": 1.0
+  },
+  "all": {
+   "tp": 87,
+   "fp": 0,
+   "fn": 4,
+   "precision": 1.0,
+   "recall": 0.9560439560439561,
+   "decoys": 46,
+   "decoy_false_alarms": 0
+  }
+ },
+ "close": {
+  "deferral": {
+   "tp": 69,
+   "fp": 0,
+   "fn": 0,
+   "precision": 1.0,
+   "recall": 1.0
+  },
+  "accrual": {
+   "tp": 7,
+   "fp": 0,
+   "fn": 1,
+   "precision": 1.0,
+   "recall": 0.875
+  },
+  "cancelled_accrued": 0,
+  "near_misses": []
+ },
+ "split": "heldout",
+ "month": "2027-01",
+ "agent": "production",
+ "operational": {
+  "llm_calls": 51,
+  "cost_usd": 0.044,
+  "seconds": 254.3,
+  "p50_ms_per_document": 9.289,
+  "p95_ms_per_document": 3296.443,
+  "periods_by_rules": 70,
+  "periods_by_model": 0
+ }
+}

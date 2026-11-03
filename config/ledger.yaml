@@ -1,0 +1,32 @@
+# The ledger service. URLs and the signing secret come from the environment in every real deployment.
+database:
+  owner_url_env: CFA_OWNER_URL            # migrations
+  app_url_env: CFA_APP_URL                # the runtime role, subject to row-level security
+  default_owner_url: postgresql://postgres@127.0.0.1:5544/cfa
+  default_app_url: postgresql://cfa_app:cfa_app@127.0.0.1:5544/cfa
+auth:
+  issuer: cfa-dev
+  secret_env: CFA_JWT_SECRET
+  dev_secret: dev-only-secret-change-me-0123456789abcdef   # refused when CFA_ENV=production
+  token_minutes: 30
+
+# Who may do what. "own" and "department" narrow what a role sees; everything is within one company.
+permissions:
+  read_documents: { employee: own, approver: department, accountant: all, admin: all, agent: all }
+  read_bank_details: [accountant, admin, agent]
+  read_bookings: [accountant, admin, agent]
+  create_proposal: [accountant, agent]
+  decide_proposal: [accountant, admin]
+  read_journal: [accountant, admin, agent]
+  export: [accountant, admin]
+  read_events: [agent, admin]
+  ingest_documents: [ingest]
+  read_audit: [accountant, admin]
+
+# Kafka is optional locally; the outbox feed (/api/events) serves the same events.
+kafka:
+  bootstrap_env: CFA_KAFKA_BOOTSTRAP
+  topics: { document.received: cfa.documents, proposal.created: cfa.proposals, proposal.decided: cfa.proposals, journal.posted: cfa.journal }
+
+datev:
+  header: { format_version: 700, category: 21, name: Buchungsstapel, version: 13, fiscal_year_start_month: 1, account_length: 4 }

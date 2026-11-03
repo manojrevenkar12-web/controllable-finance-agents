@@ -1,0 +1,47 @@
+# The agents' settings. Agents read this, their prompts and the ledger API; never config/world.yaml or the truth.
+
+coding:
+  version: 2
+  min_history: 2                 # past bookings needed before a pattern counts
+  wilson_z: 1.64                 # confidence = lower bound of the share of past bookings that agree
+  fallbacks:                     # how much a weaker pattern is trusted, relative to supplier + item
+    item_any_supplier: 0.9
+    supplier_only: 0.8
+  follows_requester_share: 0.8   # cost centre follows the requester's department if it did this often
+  half_life_days: 75             # a booking's weight halves every 75 days: habits change
+  read_notes: true               # a note naming a cost centre or department overrides the usual one
+  department_aliases:            # names people use for departments in notes
+    ENG: [Engineering, Entwicklung]
+    SALES: [Vertrieb, Sales]
+    OPS: [Betrieb, Operations]
+    ADMIN: [Verwaltung, Administration]
+  llm:
+    enabled: true
+    model: haiku
+    prompt: prompts/coding_v1.md
+    similar_bookings: 8
+    min_confidence: 0.6          # below this the model's suggestion is not shown; a person codes the line
+    budget_usd: 0.2
+
+checks:
+  version: 1
+  bank_details: master           # master: compare with the verified supplier master; history: with past invoices
+  duplicate_window_days: 14
+  vat_min_history: 3             # past lines with an item before its usual VAT rate is trusted
+  rounding_tolerance_cents: 1
+  eu_countries: [AT, BE, BG, CY, CZ, DK, EE, ES, FI, FR, GR, HR, HU, IE, IT, LT, LU, LV, MT, NL, PL, PT, RO, SE, SI, SK]
+
+close:
+  version: 1
+  prepaid_account: "1900"
+  accrual_account: "3070"
+  recurring_months: 3            # billed once in each of the last N months ...
+  recurring_gap_months: 1        # ... allowing this many months without an invoice (accrued at the time) ...
+  recurring_max_variation: 0.25  # ... with similar amounts (coefficient of variation) ...
+  recurring_max_day_spread: 10   # ... on similar days of the month = recurring
+  cancellation_words: [gekündigt, letzte Rechnung, Vertragsende, contract ends, final invoice, cancelled]
+  llm:
+    enabled: true
+    model: haiku
+    prompt: prompts/period_v1.md
+    budget_usd: 0.1

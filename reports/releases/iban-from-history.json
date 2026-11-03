@@ -1,0 +1,91 @@
+{
+ "agent": "iban-from-history",
+ "split": "test",
+ "ship": false,
+ "failed": [
+  "checks.precision",
+  "checks.decoy_false_alarms"
+ ],
+ "checks": [
+  {
+   "metric": "coding.precision_ready",
+   "value": 0.9808153477218226,
+   "limit": {
+    "min": 0.98
+   },
+   "status": "pass"
+  },
+  {
+   "metric": "coding.coverage_ready",
+   "value": 0.6289592760180995,
+   "limit": {
+    "min": 0.3
+   },
+   "status": "pass"
+  },
+  {
+   "metric": "coding.document_accuracy",
+   "value": 0.9655172413793104,
+   "limit": {
+    "min": 0.9
+   },
+   "status": "pass"
+  },
+  {
+   "metric": "checks.recall",
+   "value": 0.9555555555555556,
+   "limit": {
+    "min": 0.9
+   },
+   "status": "pass"
+  },
+  {
+   "metric": "checks.precision",
+   "value": 0.6187050359712231,
+   "limit": {
+    "min": 0.9
+   },
+   "status": "fail"
+  },
+  {
+   "metric": "checks.decoy_false_alarms",
+   "value": 52,
+   "limit": {
+    "max": 0
+   },
+   "status": "fail"
+  },
+  {
+   "metric": "close.deferral_recall",
+   "value": 0.9444444444444444,
+   "limit": {
+    "min": 0.9
+   },
+   "status": "pass"
+  },
+  {
+   "metric": "close.accrual_recall",
+   "value": 1.0,
+   "limit": {
+    "min": 0.9
+   },
+   "status": "pass"
+  },
+  {
+   "metric": "close.precision",
+   "value": 1.0,
+   "limit": {
+    "min": 0.95
+   },
+   "status": "pass"
+  },
+  {
+   "metric": "close.cancelled_accrued",
+   "value": 0,
+   "limit": {
+    "max": 0
+   },
+   "status": "pass"
+  }
+ ]
+}

@@ -1,0 +1,177 @@
+{
+ "documents": 663,
+ "coding": {
+  "account_accuracy": {
+   "value": 0.964,
+   "low": 0.952,
+   "high": 0.975,
+   "k": 964,
+   "n": 1000
+  },
+  "auto_or_suggested": {
+   "value": 0.9939668174962293,
+   "low": 0.9879336349924586,
+   "high": 0.9984917043740573,
+   "k": 659,
+   "n": 663
+  },
+  "cost_centre_accuracy": {
+   "value": 0.993,
+   "low": 0.9879749999999999,
+   "high": 0.998,
+   "k": 993,
+   "n": 1000
+  },
+  "coverage_ready": {
+   "value": 0.6289592760180995,
+   "low": 0.5912518853695324,
+   "high": 0.665158371040724,
+   "k": 417,
+   "n": 663
+  },
+  "document_accuracy": {
+   "value": 0.9499241274658573,
+   "low": 0.9332321699544764,
+   "high": 0.9650986342943855,
+   "k": 626,
+   "n": 659
+  },
+  "line_accuracy": {
+   "value": 0.957,
+   "low": 0.944,
+   "high": 0.969,
+   "k": 957,
+   "n": 1000
+  },
+  "line_accuracy_model": {
+   "value": 0.4074074074074074,
+   "low": 0.2222222222222222,
+   "high": 0.5925925925925926,
+   "k": 11,
+   "n": 27
+  },
+  "line_accuracy_pattern": {
+   "value": 0.9722507708119219,
+   "low": 0.9619732785200411,
+   "high": 0.9815005138746146,
+   "k": 946,
+   "n": 973
+  },
+  "new_supplier_accuracy": {
+   "value": 0.78,
+   "low": 0.66,
+   "high": 0.8804999999999973,
+   "k": 39,
+   "n": 50
+  },
+  "new_supplier_suggested": {
+   "value": 0.9259259259259259,
+   "low": 0.8518518518518519,
+   "high": 0.9814814814814815,
+   "k": 50,
+   "n": 54
+  },
+  "precision_ready": {
+   "value": 0.9808153477218226,
+   "low": 0.9664268585131894,
+   "high": 0.9928057553956835,
+   "k": 409,
+   "n": 417
+  },
+  "precision_review": {
+   "value": 0.8966942148760331,
+   "low": 0.8553719008264463,
+   "high": 0.9338842975206612,
+   "k": 217,
+   "n": 242
+  },
+  "tax_key_accuracy": {
+   "value": 1.0,
+   "low": 1.0,
+   "high": 1.0,
+   "k": 1000,
+   "n": 1000
+  },
+  "buckets": {
+   "review": 242,
+   "ready": 417,
+   "person": 4
+  }
+ },
+ "checks": {
+  "duplicate": {
+   "tp": 22,
+   "fp": 0,
+   "fn": 0,
+   "precision": 1.0,
+   "recall": 1.0
+  },
+  "iban_changed": {
+   "tp": 16,
+   "fp": 0,
+   "fn": 0,
+   "precision": 1.0,
+   "recall": 1.0
+  },
+  "vat_rate_wrong": {
+   "tp": 12,
+   "fp": 0,
+   "fn": 2,
+   "precision": 1.0,
+   "recall": 0.8571428571428571
+  },
+  "reverse_charge_missing": {
+   "tp": 17,
+   "fp": 0,
+   "fn": 0,
+   "precision": 1.0,
+   "recall": 1.0
+  },
+  "arithmetic": {
+   "tp": 21,
+   "fp": 0,
+   "fn": 0,
+   "precision": 1.0,
+   "recall": 1.0
+  },
+  "all": {
+   "tp": 88,
+   "fp": 0,
+   "fn": 2,
+   "precision": 1.0,
+   "recall": 0.9777777777777777,
+   "decoys": 58,
+   "decoy_false_alarms": 0
+  }
+ },
+ "close": {
+  "deferral": {
+   "tp": 54,
+   "fp": 0,
+   "fn": 0,
+   "precision": 1.0,
+   "recall": 1.0
+  },
+  "accrual": {
+   "tp": 7,
+   "fp": 0,
+   "fn": 0,
+   "precision": 1.0,
+   "recall": 1.0
+  },
+  "cancelled_accrued": 0,
+  "near_misses": []
+ },
+ "split": "test",
+ "month": "2026-12",
+ "agent": "production",
+ "operational": {
+  "llm_calls": 34,
+  "cost_usd": 0.0351,
+  "seconds": 11.4,
+  "p50_ms_per_document": 8.610000000000001,
+  "p95_ms_per_document": 17.21,
+  "periods_by_rules": 56,
+  "periods_by_model": 0
+ }
+}

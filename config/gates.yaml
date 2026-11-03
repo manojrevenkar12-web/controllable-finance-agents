@@ -1,0 +1,17 @@
+# Quality gates. Thresholds are chosen on dev; gates are judged on test, which is never used to tune.
+split: test
+calibration:
+  split: dev
+  ready_precision_target: 0.99   # documents approved in bulk must be right 99 times in 100
+  min_ready_documents: 30
+gates:                            # floors every release must meet on the test split
+  coding.precision_ready: { min: 0.98 }
+  coding.coverage_ready: { min: 0.30 }
+  coding.document_accuracy: { min: 0.90 }
+  checks.recall: { min: 0.90 }
+  checks.precision: { min: 0.90 }
+  checks.decoy_false_alarms: { max: 0 }
+  close.deferral_recall: { min: 0.90 }
+  close.accrual_recall: { min: 0.90 }
+  close.precision: { min: 0.95 }
+  close.cancelled_accrued: { max: 0 }

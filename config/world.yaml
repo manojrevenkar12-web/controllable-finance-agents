@@ -1,0 +1,205 @@
+# The simulated world: companies, their charts of accounts and habits, suppliers, and what goes wrong.
+# Generator and evaluation only. Agents, the ledger service and the console never read this file
+# (tests/test_isolation.py). Account numbers are modelled on SKR04 ranges; names and mappings are illustrative.
+
+months:
+  history: ["2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06",
+            "2026-07", "2026-08", "2026-09", "2026-10"]
+  splits:            # evaluation months: documents arriving in these months are what agents are scored on
+    dev: "2026-11"
+    test: "2026-12"
+    heldout: "2027-01"
+
+accounts:            # shared names; each company maps categories to its own choice of these
+  "6815": Bürobedarf
+  "6837": Lizenzen und Softwaremiete
+  "6495": Wartung Hard- und Software
+  "6805": Telefon und Internet
+  "6650": Reisekosten Arbeitnehmer Fahrtkosten
+  "6660": Reisekosten Arbeitnehmer Übernachtung
+  "6640": Bewirtungskosten
+  "6400": Versicherungen
+  "6310": Miete
+  "6825": Rechts- und Beratungskosten
+  "6600": Werbekosten
+  "6821": Fortbildungskosten
+  "6740": Frachten und Versand
+  "6845": Werkzeuge und Kleingeräte
+  "1900": Aktive Rechnungsabgrenzung
+  "3070": Sonstige Rückstellungen
+  "3300": Verbindlichkeiten aus Lieferungen und Leistungen
+
+tax_keys:            # internal keys; the DATEV BU key used on export is configured per company in the ledger
+  VSt19: { rate: 0.19, reverse_charge: false }
+  VSt7: { rate: 0.07, reverse_charge: false }
+  RC19: { rate: 0.19, reverse_charge: true }     # § 13b UStG: the recipient owes the VAT
+  NONE: { rate: 0.0, reverse_charge: false }     # exempt, e.g. insurance premiums
+
+categories:
+  software:      { vat: 0.19, monthly: false, words: [Lizenz, Abonnement, Subscription, Seats, Nutzer, Workspace, Plan, licence], new_words: [API-Kontingent, Enterprise-Seat, Add-on] }
+  cloud:         { vat: 0.19, monthly: true,  words: [Compute, Storage, Datenbank-Instanzen, Rechenzeit, Egress, Cloud-Ressourcen], new_words: [GPU-Stunden, Objektspeicher] }
+  office:        { vat: 0.19, monthly: false, words: [Druckerpapier, Ordner, Kugelschreiber, Toner, Notizblöcke, Büroklammern], new_words: [Haftnotizen, Etiketten] }
+  hardware:      { vat: 0.19, monthly: false, words: [USB-C-Kabel, Tastatur, Maus, Headset, Monitorarm, Dockingstation], new_words: [Webcam, Ladegerät] }
+  telecom:       { vat: 0.19, monthly: true,  words: [Mobilfunk, Festnetz, Glasfaser, Datenvolumen, Grundgebühr], new_words: [Roaming-Paket] }
+  rail:          { vat: 0.07, monthly: false, words: [Fahrkarte, Fernverkehr, Sitzplatzreservierung, Flexpreis, Sparpreis], new_words: [BahnCard] }
+  hotel:         { vat: 0.07, monthly: false, words: [Übernachtung, Zimmer, Logis], new_words: [Tagungspauschale-Zimmer] }
+  breakfast:     { vat: 0.19, monthly: false, words: [Frühstück], new_words: [Frühstücksbuffet] }
+  meals:         { vat: 0.19, monthly: false, words: [Geschäftsessen, Bewirtung, Abendessen mit Kunden], new_words: [Mittagessen Team-Offsite] }
+  insurance:     { vat: 0.0,  monthly: false, words: [Versicherungsbeitrag, Betriebshaftpflicht, Cyber-Police, Prämie], new_words: [D&O-Police] }
+  rent:          { vat: 0.19, monthly: true,  words: [Büromiete, Nebenkostenvorauszahlung, Stellplatz], new_words: [Lagerfläche] }
+  legal:         { vat: 0.19, monthly: false, words: [Rechtsberatung, Vertragsprüfung, Beratungsleistung, Steuerberatung], new_words: [Markenanmeldung] }
+  marketing:     { vat: 0.19, monthly: false, words: [Anzeigen, Kampagne, Messestand, Werbemittel, Sponsoring], new_words: [Roll-up-Banner, LinkedIn-Kampagne] }
+  training:      { vat: 0.19, monthly: false, words: [Schulung, Workshop, Seminar, Konferenzticket, Zertifizierung], new_words: [E-Learning-Kurs] }
+  shipping:      { vat: 0.19, monthly: false, words: [Paketversand, Express, Kurier, Sendungen], new_words: [Palettenversand] }
+  tools:         { vat: 0.19, monthly: false, words: [Akkuschrauber, Werkzeugset, Leiter, Messgerät], new_words: [Lötstation] }
+
+base_mapping:        # category -> account before a company's own habits
+  software: "6837"
+  cloud: "6837"
+  office: "6815"
+  hardware: "6845"
+  telecom: "6805"
+  rail: "6650"
+  hotel: "6660"
+  breakfast: "6660"
+  meals: "6640"
+  insurance: "6400"
+  rent: "6310"
+  legal: "6825"
+  marketing: "6600"
+  training: "6821"
+  shipping: "6740"
+  tools: "6845"
+
+fixed_cost_centre:   # categories booked to a fixed cost centre whatever the requester's department
+  rent: ADMIN
+  insurance: ADMIN
+  cloud: ENG
+  legal: ADMIN
+
+tenants:
+  - id: t-nordlicht
+    name: Nordlicht Robotics GmbH
+    departments: { ENG: "4000", SALES: "3000", ADMIN: "1000", OPS: "5000" }
+    habits: { cloud: "6495", hardware: "6815" }
+    materiality_eur: 500
+    docs_per_month: 70
+  - id: t-elbwerk
+    name: Elbwerk Logistik GmbH
+    departments: { ENG: "410", SALES: "310", ADMIN: "110", OPS: "510" }
+    habits: { software: "6495", tools: "6815" }
+    materiality_eur: 1000
+    docs_per_month: 80
+  - id: t-isarbrot
+    name: Isarbrot Bäckereien GmbH
+    departments: { ENG: "K40", SALES: "K30", ADMIN: "K10", OPS: "K50" }
+    habits: { breakfast: "6640", training: "6600" }
+    materiality_eur: 250
+    docs_per_month: 60
+  - id: t-rheinform
+    name: Rheinform Design GmbH
+    departments: { ENG: "CC-ENG", SALES: "CC-SAL", ADMIN: "CC-ADM", OPS: "CC-OPS" }
+    habits: { marketing: "6825", hardware: "6815", cloud: "6805" }
+    materiality_eur: 1000
+    docs_per_month: 65
+  - id: t-havelstrom
+    name: Havelstrom Energie GmbH
+    departments: { ENG: "7100", SALES: "7200", ADMIN: "7300", OPS: "7400" }
+    habits: {}
+    materiality_eur: 2500
+    docs_per_month: 75
+  - id: t-moselwein
+    name: Moselwein Handel GmbH
+    departments: { ENG: "900", SALES: "910", ADMIN: "920", OPS: "930" }
+    habits: { meals: "6600", shipping: "6815" }
+    materiality_eur: 500
+    docs_per_month: 55
+
+  - id: t-alsterkai
+    name: Alsterkai Medien GmbH
+    departments: { ENG: "4100", SALES: "4200", ADMIN: "4300", OPS: "4400" }
+    habits: { training: "6825", rail: "6660" }
+    materiality_eur: 1000
+    docs_per_month: 70
+  - id: t-saalefeld
+    name: Saalefeld Maschinenbau GmbH
+    departments: { ENG: "E1", SALES: "V1", ADMIN: "A1", OPS: "P1" }
+    habits: { tools: "6495", office: "6845" }
+    materiality_eur: 2500
+    docs_per_month: 60
+  - id: t-wattenblick
+    name: Wattenblick Tourismus GmbH
+    departments: { ENG: "11", SALES: "12", ADMIN: "13", OPS: "14" }
+    habits: { hotel: "6640", marketing: "6821" }
+    materiality_eur: 250
+    docs_per_month: 65
+  - id: t-neckarbits
+    name: Neckarbits Software GmbH
+    departments: { ENG: "DEV", SALES: "GTM", ADMIN: "G&A", OPS: "SUP" }
+    habits: { software: "6495", cloud: "6495", hardware: "6815" }
+    materiality_eur: 500
+    docs_per_month: 85
+
+suppliers:           # name, country, categories it sells; companies buy from a random subset
+  - { name: Wolkenwerk Hosting GmbH, country: DE, categories: [cloud] }
+  - { name: Nimbusgrid B.V., country: NL, categories: [cloud] }
+  - { name: Tasklane Software Ltd, country: IE, categories: [software] }
+  - { name: Formfeld Software GmbH, country: DE, categories: [software] }
+  - { name: Ledgerly SaaS Ltd, country: IE, categories: [software] }
+  - { name: Planbar Cloud GmbH, country: DE, categories: [software] }
+  - { name: Papierhaus Kranich KG, country: DE, categories: [office] }
+  - { name: Allesbüro Versand GmbH, country: DE, categories: [office, hardware, tools] }
+  - { name: Kabelkontor GmbH, country: DE, categories: [hardware] }
+  - { name: Funknetz Mitte AG, country: DE, categories: [telecom] }
+  - { name: Glasfaser Ost GmbH, country: DE, categories: [telecom] }
+  - { name: Schienenfern Reisen GmbH, country: DE, categories: [rail] }
+  - { name: Hotel Am Kanal GmbH, country: DE, categories: [hotel, breakfast] }
+  - { name: Stadthotel Linde KG, country: DE, categories: [hotel, breakfast] }
+  - { name: Brasserie Hafenkante, country: DE, categories: [meals] }
+  - { name: Trattoria Sole GmbH, country: DE, categories: [meals] }
+  - { name: Hanseatische Gewerbeversicherung AG, country: DE, categories: [insurance] }
+  - { name: Bürohaus Spreeufer GmbH & Co. KG, country: DE, categories: [rent] }
+  - { name: Kanzlei Berger & Voss, country: DE, categories: [legal] }
+  - { name: Reichweite Media GmbH, country: DE, categories: [marketing] }
+  - { name: Adlane Marketing B.V., country: NL, categories: [marketing] }
+  - { name: Lernwerk Akademie GmbH, country: DE, categories: [training] }
+  - { name: Paketblitz Logistik GmbH, country: DE, categories: [shipping] }
+  - { name: Werkzeugwelt Huber GmbH, country: DE, categories: [tools] }
+  - { name: Codegarten Software GmbH, country: DE, categories: [software], new_in: "2026-11" }
+  - { name: Datawell Analytics Ltd, country: IE, categories: [software], new_in: "2026-12" }
+  - { name: Messebau Nordstern GmbH, country: DE, categories: [marketing], new_in: "2026-11" }
+  - { name: Seminarhaus Lindenhof GmbH, country: DE, categories: [training], new_in: "2026-12" }
+  - { name: Rechenhafen Cloud B.V., country: NL, categories: [cloud], new_in: "2027-01" }
+  - { name: Kontorwaren Ebert KG, country: DE, categories: [office, hardware], new_in: "2027-01" }
+
+# How real ledgers are messier than rules.
+noise:
+  history_miscoded: 0.03       # past lines booked to a wrong account (people make mistakes too)
+  sku_share: 0.35              # lines from mixed-catalogue suppliers that name only an article number
+  skus_per_category: 12
+  cost_centre_note: 0.08       # documents whose notes assign them to another department's cost centre
+habit_changes:                 # a company changes how it books a category from a month on
+  t-nordlicht: { category: software, from: "2026-06", account: "6495" }
+  t-elbwerk: { category: telecom, from: "2026-08", account: "6837" }
+  t-rheinform: { category: training, from: "2026-07", account: "6825" }
+  t-havelstrom: { category: office, from: "2026-05", account: "6845" }
+  t-neckarbits: { category: marketing, from: "2026-09", account: "6825" }
+  t-alsterkai: { category: hardware, from: "2026-06", account: "6815" }
+
+# Recurring suppliers bill monthly; one recurring invoice per company may be missing at month end (an accrual).
+recurring_categories: [cloud, telecom, rent]
+
+# What goes wrong, per evaluation-month invoice (probabilities) and the decoys that look wrong but are not.
+issues:
+  duplicate: 0.05            # the same invoice again, number re-formatted
+  iban_changed: 0.04         # bank details differ from the supplier master, no verified change on file
+  vat_rate_wrong: 0.05       # a reduced rate on a standard-rated line
+  reverse_charge_missing: 0.3   # share of EU-supplier invoices that charge German VAT instead of reverse charge
+  arithmetic: 0.04           # net + VAT != gross
+decoys:
+  iban_changed_verified: 0.03     # bank details changed with a verified change on file: correct
+  same_amount_new_number: 0.04    # a recurring invoice with the same amount and a new number: not a duplicate
+deferrals:
+  annual_share: 0.5          # share of software and insurance invoices that are annual, prepaid
+  mid_month_start: 0.35      # share of annual periods that start mid-month (day-based pro rata)
+cancellations: 0.25          # share of companies where one recurring contract ends with a note (no accrual)
