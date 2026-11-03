@@ -1,0 +1,129 @@
+{
+ "set": "blind-2",
+ "status": "blind",
+ "ran_at": "2026-11-03T15:15:50+00:00",
+ "cases": 60,
+ "passed": 53,
+ "by_kind": {
+  "close": {
+   "cases": 30,
+   "passed": 23
+  },
+  "check": {
+   "cases": 30,
+   "passed": 30
+  }
+ },
+ "failures": [
+  {
+   "id": "close-06",
+   "kind": "close",
+   "pass": false,
+   "expected": [
+    "('deferral', 'inv-1', '1900', '6837', 91405, '4000')"
+   ],
+   "got": [],
+   "agent_said": [],
+   "case_why": "English ordinal dates in a February close (last day 28.02.2027, not a leap year). 01.02.2027-31.01.2028 = 365 days (no 29 February inside); after 28.02.2027: 365 - 28 = 337. 99000 x 337 / 365 = 91405.479 -> 91405."
+  },
+  {
+   "id": "close-08",
+   "kind": "close",
+   "pass": false,
+   "expected": [
+    "('deferral', 'inv-1', '1900', '6495', 2000, '4000')",
+    "('deferral', 'inv-2', '1900', '6310', 75000, '5000')"
+   ],
+   "got": [
+    "('deferral', 'inv-1', '1900', '6495', 2000, '4000')"
+   ],
+   "agent_said": [
+    "620.00 EUR for 02.12.2026–01.01.2027 (31 days); 1 days fall after 31.12.2026: 620.00 × 1/31 = 20.00 EUR to prepaid expenses."
+   ],
+   "case_why": "inv-1 ends one day after the month: 02.12.2026-01.01.2027 = 30 + 1 = 31 days, 1 day after 31.12.2026. 62000 x 1 / 31 = 2000 exactly. inv-2 starts the day after the month: all 31 days of 01.01.-31.01.2027 lie after 31.12.2026, so 75000 x 31 / 31 = 75000. Both nets >= 50000."
+  },
+  {
+   "id": "close-15",
+   "kind": "close",
+   "pass": false,
+   "expected": [],
+   "got": [
+    "('deferral', 'inv-2', '1900', '6800', 47603, '1000')"
+   ],
+   "agent_said": [
+    "640.00 EUR for 01.12.2026–31.03.2027 (121 days); 90 days fall after 31.12.2026: 640.00 × 90/121 = 476.03 EUR to prepaid expenses."
+   ],
+   "case_why": "Notes that only look like periods. Each holds two dates, but none states a service period: inv-1 a delivery date and a payment due date; inv-2 the validity of a price list for a delivered order; inv-3 a booking date and an event day; inv-4 an order date and a delivery date (goods, no service period). The agent never guesses dates and defers only what a stated service period puts after the month, so no entries. All nets are >= 50000, so materiality is not what stops them."
+  },
+  {
+   "id": "close-17",
+   "kind": "close",
+   "pass": false,
+   "expected": [
+    "('deferral', 'inv-1', '1900', '6837', 219613, '4000')",
+    "('deferral', 'inv-2', '1900', '6310', 295000, '1000')"
+   ],
+   "got": [
+    "('deferral', 'inv-1', '1900', '6837', 219613, '4000')"
+   ],
+   "agent_said": [
+    "2500.00 EUR for 10.01.2027–09.07.2027 (181 days); 159 days fall after 31.01.2027: 2500.00 × 159/181 = 2196.13 EUR to prepaid expenses."
+   ],
+   "case_why": "Start and length in English months and in German days. inv-1: 6 months from 10.01.2027 = 10.01.2027-09.07.2027 = 22 + 28 + 31 + 30 + 31 + 30 + 9 = 181 days; after 31.01.2027: 181 - 22 = 159. 250000 x 159 / 181 = 219613.260 -> 219613. inv-2: 90 days from 01.01.2027, the start day being day 1 (as '12 Monate ab dem 15.11.2026' ends on 14.11.2027) = 01.01.-31.03.2027 (31 + 28 + 31 = 90); after 31.01.2027: 59. 450000 x 59 / 90 = 295000 exactly. A length in days is not among the contract's examples; see README."
+  },
+  {
+   "id": "close-19",
+   "kind": "close",
+   "pass": false,
+   "expected": [
+    "('deferral', 'inv-1', '1900', '6837', 165000, '4000')",
+    "('deferral', 'inv-2', '1900', '6460', 75500, '2000')"
+   ],
+   "got": [
+    "('deferral', 'inv-2', '1900', '6460', 75500, '2000')"
+   ],
+   "agent_said": [
+    "910.00 EUR for 01.12.2026–31.05.2027 (182 days); 151 days fall after 31.12.2026: 910.00 × 151/182 = 755.00 EUR to prepaid expenses."
+   ],
+   "case_why": "inv-1: British day/month/year with slashes; both days (15, 14) exceed 12, so the reading is unambiguous. 15.12.2026-14.06.2027 = 17 + 31 + 28 + 31 + 30 + 31 + 14 = 182 days; after 31.12.2026: 165. 182000 x 165 / 182 = 165000. inv-2: 'bis einschl.' (inclusive) 01.12.2026-31.05.2027 = 31 + 31 + 28 + 31 + 30 + 31 = 182 days; after: 151. 91000 x 151 / 182 = 75500."
+  },
+  {
+   "id": "close-26",
+   "kind": "close",
+   "pass": false,
+   "expected": [],
+   "got": [
+    "('accrual', 's-70', '6825', '3070', 120000, '1000')",
+    "('accrual', 's-71', '6837', '3070', 4900, '4000')",
+    "('accrual', 's-72', '6460', '3070', 33000, '2000')",
+    "('accrual', 's-73', '6560', '3070', 52000, '1000')"
+   ],
+   "agent_said": [
+    "billed monthly (last: 2026-09, 2026-10, 2026-11) but no invoice for 2026-12; accrue the average net 1200.00 EUR to 6825 / cost centre 1000 as on the latest invoice.",
+    "billed monthly (last: 2026-09, 2026-10, 2026-11) but no invoice for 2026-12; accrue the average net 49.00 EUR to 6837 / cost centre 4000 as on the latest invoice.",
+    "billed monthly (last: 2026-09, 2026-10, 2026-11) but no invoice for 2026-12; accrue the average net 330.00 EUR to 6460 / cost centre 2000 as on the latest invoice.",
+    "billed monthly (last: 2026-09, 2026-10, 2026-11) but no invoice for 2026-12; accrue the average net 520.00 EUR to 6560 / cost centre 1000 as on the latest invoice."
+   ],
+   "case_why": "Four suppliers that would otherwise qualify (one invoice in each of Sep, Oct, Nov; equal nets, CV 0; day spreads 30-27 = 3, 0, 3-2 = 1, 2-1 = 1), but each latest invoice says the contract has ended, in wordings not listed in the contract: 'rechnen das Mandat abschließend ab' (final bill of the engagement), 'plan has been closed; no further invoices will be issued', 'Wartungsvertrag endete mit Ablauf des 30.11.2026', 'Leasingende: Fahrzeug zurückgegeben'. No accruals."
+  },
+  {
+   "id": "close-27",
+   "kind": "close",
+   "pass": false,
+   "expected": [
+    "('accrual', 's-80', '6305', '3070', 9900, '1000')",
+    "('accrual', 's-81', '6495', '3070', 24000, '2000')",
+    "('accrual', 's-82', '6805', '3070', 5900, '1000')"
+   ],
+   "got": [
+    "('accrual', 's-80', '6305', '3070', 9900, '1000')",
+    "('accrual', 's-81', '6495', '3070', 24000, '2000')"
+   ],
+   "agent_said": [
+    "billed monthly (last: 2026-10, 2026-11, 2026-12) but no invoice for 2027-01; accrue the average net 99.00 EUR to 6305 / cost centre 1000 as on the latest invoice.",
+    "billed monthly (last: 2026-10, 2026-11, 2026-12) but no invoice for 2027-01; accrue the average net 240.00 EUR to 6495 / cost centre 2000 as on the latest invoice."
+   ],
+   "case_why": "Notes that mention cancellation but do not end the contract: a notice period, an automatic renewal unless cancelled, and a price change with the right to cancel. All three billed once in each of Oct, Nov, Dec with equal nets (CV 0) and day spreads 0, 0 and 21 - 20 = 1; no January invoice. Accruals: 9900 x 3 / 3 = 9900; 24000; 5900, each to the latest invoice's account and cost centre."
+  }
+ ]
+}

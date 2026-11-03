@@ -1,0 +1,1654 @@
+# Blind held-out set 2. Written from docs/AGENT_BEHAVIOUR.md and heldout/WRITING_CASES.md only.
+# All companies, suppliers, invoice numbers and IBANs are invented. Amounts are integer cents.
+# Rounding: commercial, half a cent and more away from zero. Day counts include both ends of a period.
+
+# ---------------------------------------------------------------------------------------------------
+# CLOSE CASES
+# ---------------------------------------------------------------------------------------------------
+
+- id: close-01
+  kind: close
+  month: "2026-12"
+  materiality_cents: 50000
+  documents:
+    - id: inv-1
+      supplier_id: s-1
+      supplier_name: Softwarehaus Lindenau GmbH
+      date: "2026-12-01"
+      net_total: 240000
+      notes: "Wartungsvertrag WV-2209, Leistungszeitraum vom 01.12.2026 bis 30.11.2027"
+      lines: [{net: 240000}]
+      coding: [{account: "6837", cost_centre: "4000"}]
+  history: []
+  duplicates: []
+  expect:
+    entries:
+      - {type: deferral, document_id: inv-1, debit: "1900", credit: "6837", amount_cents: 219616, cost_centre: "4000"}
+  why: >-
+    German 'vom ... bis ...' period 01.12.2026-30.11.2027 = 31 (Dec) + 334 (Jan-Nov 2027) = 365 days. Days after
+    31.12.2026: 01.01.2027-30.11.2027 = 334. 240000 x 334 / 365 = 219616.438 -> 219616. Net 240000 >= 50000.
+
+- id: close-02
+  kind: close
+  month: "2026-12"
+  materiality_cents: 50000
+  documents:
+    - id: inv-1
+      supplier_id: s-1
+      supplier_name: Cloudbruecke Systems GmbH
+      date: "2026-12-15"
+      net_total: 129900
+      notes: "Subscription term: December 15, 2026 through December 14, 2027. Billed annually in advance."
+      lines: [{net: 129900}]
+      coding: [{account: "6837", cost_centre: "4200"}]
+  history: []
+  duplicates: []
+  expect:
+    entries:
+      - {type: deferral, document_id: inv-1, debit: "1900", credit: "6837", amount_cents: 123850, cost_centre: "4200"}
+  why: >-
+    English written-out dates with 'through'. 15.12.2026-14.12.2027 = 17 (15-31 Dec) + 348 (01.01.-14.12.2027)
+    = 365 days; 348 days after 31.12.2026. 129900 x 348 / 365 = 123849.863 -> 123850. Net 129900 >= 50000.
+
+- id: close-03
+  kind: close
+  month: "2027-01"
+  materiality_cents: 50000
+  documents:
+    - id: inv-1
+      supplier_id: s-1
+      supplier_name: Datenwerk Rhoen GmbH
+      date: "2027-01-04"
+      net_total: 1200000
+      notes: "Vertragslaufzeit 24 Monate ab dem 01.01.2027, Vorauszahlung fuer die gesamte Laufzeit"
+      lines: [{net: 1200000}]
+      coding: [{account: "6837", cost_centre: "3000"}]
+    - id: inv-2
+      supplier_id: s-2
+      supplier_name: Versicherungskontor Weserbogen AG
+      date: "2027-01-20"
+      net_total: 730000
+      notes: "Nachberechnung Betriebshaftpflicht, Versicherungsperiode 01.10.2026 – 30.09.2027"
+      lines: [{net: 730000}]
+      coding: [{account: "6400", cost_centre: "1000"}]
+  history: []
+  duplicates: []
+  expect:
+    entries:
+      - {type: deferral, document_id: inv-1, debit: "1900", credit: "6837", amount_cents: 1149111, cost_centre: "3000"}
+      - {type: deferral, document_id: inv-2, debit: "1900", credit: "6400", amount_cents: 484000, cost_centre: "1000"}
+  why: >-
+    inv-1: start and length, 24 months from 01.01.2027 = 01.01.2027-31.12.2028 (same rule as the contract's
+    '12 Monate ab dem 15.11.2026' -> 14.11.2027) = 365 + 366 (2028 is a leap year) = 731 days; after 31.01.2027:
+    731 - 31 = 700. 1200000 x 700 / 731 = 1149110.807 -> 1149111.
+    inv-2: an invoice of January for a period that started in October. 01.10.2026-30.09.2027 = 92 + 273 = 365
+    days; after 31.01.2027: 01.02.-30.09.2027 = 28+31+30+31+30+31+31+30 = 242. 730000 x 242 / 365 = 484000
+    exactly. Both nets >= 50000.
+
+- id: close-04
+  kind: close
+  month: "2026-12"
+  materiality_cents: 50000
+  documents:
+    - id: inv-1
+      supplier_id: s-1
+      supplier_name: Klimatechnik Weissdorn GmbH
+      date: "2026-12-16"
+      net_total: 87450
+      notes: "Leistungszeitraum 16.12.26 - 15.03.27, Wartung Kaeltemaschine"
+      lines: [{net: 87450}]
+      coding: [{account: "6460", cost_centre: "2000"}]
+    - id: inv-2
+      supplier_id: s-2
+      supplier_name: Brandschutz Haselgrund GmbH
+      date: "2026-12-02"
+      net_total: 64000
+      notes: "Wartung v. 01.12.26 bis 31.12.26"
+      lines: [{net: 64000}]
+      coding: [{account: "6460", cost_centre: "2000"}]
+  history: []
+  duplicates: []
+  expect:
+    entries:
+      - {type: deferral, document_id: inv-1, debit: "1900", credit: "6460", amount_cents: 71903, cost_centre: "2000"}
+  why: >-
+    Two-digit years are dates like any other. inv-1: 16.12.2026-15.03.2027 = 16 + 31 + 28 + 15 = 90 days; after
+    31.12.2026: 31 + 28 + 15 = 74. 87450 x 74 / 90 = 71903.333 -> 71903. inv-2: 01.12.2026-31.12.2026 ends on the
+    month's last day, so nothing lies after the month: no deferral.
+
+- id: close-05
+  kind: close
+  month: "2027-01"
+  materiality_cents: 100000
+  documents:
+    - id: inv-1
+      supplier_id: s-1
+      supplier_name: Gewerbehof Fichtenberg GmbH & Co. KG
+      date: "2027-01-02"
+      net_total: 360000
+      notes: "Quartalsmiete Lagerflaeche. Leistungszeitraum: 1. Januar 2027 bis 31. März 2027"
+      lines: [{net: 360000}]
+      coding: [{account: "6310", cost_centre: "1000"}]
+  history: []
+  duplicates: []
+  expect:
+    entries:
+      - {type: deferral, document_id: inv-1, debit: "1900", credit: "6310", amount_cents: 236000, cost_centre: "1000"}
+  why: >-
+    German written-out months. 01.01.2027-31.03.2027 = 31 + 28 + 31 = 90 days; after 31.01.2027: 28 + 31 = 59.
+    360000 x 59 / 90 = 236000 exactly. Net 360000 >= 100000.
+
+- id: close-06
+  kind: close
+  month: "2027-02"
+  materiality_cents: 50000
+  documents:
+    - id: inv-1
+      supplier_id: s-1
+      supplier_name: Northdesk Analytics GmbH
+      date: "2027-02-03"
+      net_total: 99000
+      notes: "Licence period: 1st February 2027 to 31st January 2028"
+      lines: [{net: 99000}]
+      coding: [{account: "6837", cost_centre: "4000"}]
+  history: []
+  duplicates: []
+  expect:
+    entries:
+      - {type: deferral, document_id: inv-1, debit: "1900", credit: "6837", amount_cents: 91405, cost_centre: "4000"}
+  why: >-
+    English ordinal dates in a February close (last day 28.02.2027, not a leap year). 01.02.2027-31.01.2028 = 365
+    days (no 29 February inside); after 28.02.2027: 365 - 28 = 337. 99000 x 337 / 365 = 91405.479 -> 91405.
+
+- id: close-07
+  kind: close
+  month: "2026-12"
+  materiality_cents: 50000
+  documents:
+    - id: inv-1
+      supplier_id: s-1
+      supplier_name: Hausmeisterservice Kranbach GmbH
+      date: "2026-12-03"
+      net_total: 300000
+      notes: "Quartalspauschale IV/2026, Leistungszeitraum 01.10.2026 – 31.12.2026"
+      lines: [{net: 300000}]
+      coding: [{account: "6330", cost_centre: "1000"}]
+    - id: inv-2
+      supplier_id: s-2
+      supplier_name: Wachdienst Eichenkamp GmbH
+      date: "2026-12-05"
+      net_total: 150000
+      notes: "Abrechnungszeitraum 01.11.2026 bis 31.01.2027"
+      lines: [{net: 150000}]
+      coding: [{account: "6305", cost_centre: "1000"}]
+  history: []
+  duplicates: []
+  expect:
+    entries:
+      - {type: deferral, document_id: inv-2, debit: "1900", credit: "6305", amount_cents: 50543, cost_centre: "1000"}
+  why: >-
+    inv-1's period ends exactly on 31.12.2026, the month's last day: it does not end after it, no deferral.
+    inv-2: 01.11.2026-31.01.2027 = 30 + 31 + 31 = 92 days; after 31.12.2026: 31. 150000 x 31 / 92 = 50543.478
+    -> 50543.
+
+- id: close-08
+  kind: close
+  month: "2026-12"
+  materiality_cents: 50000
+  documents:
+    - id: inv-1
+      supplier_id: s-1
+      supplier_name: Webagentur Lichtblick GmbH
+      date: "2026-12-02"
+      net_total: 62000
+      notes: "Hosting & Support, Zeitraum 02.12.2026 – 01.01.2027"
+      lines: [{net: 62000}]
+      coding: [{account: "6495", cost_centre: "4000"}]
+    - id: inv-2
+      supplier_id: s-2
+      supplier_name: Seminarhaus Talblick GmbH
+      date: "2026-12-28"
+      net_total: 75000
+      notes: "Room hire, monthly in advance. Service period 1 January 2027 – 31 January 2027"
+      lines: [{net: 75000}]
+      coding: [{account: "6310", cost_centre: "5000"}]
+  history: []
+  duplicates: []
+  expect:
+    entries:
+      - {type: deferral, document_id: inv-1, debit: "1900", credit: "6495", amount_cents: 2000, cost_centre: "4000"}
+      - {type: deferral, document_id: inv-2, debit: "1900", credit: "6310", amount_cents: 75000, cost_centre: "5000"}
+  why: >-
+    inv-1 ends one day after the month: 02.12.2026-01.01.2027 = 30 + 1 = 31 days, 1 day after 31.12.2026.
+    62000 x 1 / 31 = 2000 exactly. inv-2 starts the day after the month: all 31 days of 01.01.-31.01.2027 lie
+    after 31.12.2026, so 75000 x 31 / 31 = 75000. Both nets >= 50000.
+
+- id: close-09
+  kind: close
+  month: "2028-02"
+  materiality_cents: 50000
+  documents:
+    - id: inv-1
+      supplier_id: s-1
+      supplier_name: Objektschutz Muehlbach GmbH
+      date: "2028-02-01"
+      net_total: 400000
+      notes: "Leistungszeitraum 01.12.2027 – 29.02.2028"
+      lines: [{net: 400000}]
+      coding: [{account: "6305", cost_centre: "1000"}]
+    - id: inv-2
+      supplier_id: s-2
+      supplier_name: Rechenwerk Saar GmbH
+      date: "2028-02-01"
+      net_total: 366000
+      notes: "Laufzeit 12 Monate ab dem 01.02.2028"
+      lines: [{net: 366000}]
+      coding: [{account: "6837", cost_centre: "4000"}]
+  history: []
+  duplicates: []
+  expect:
+    entries:
+      - {type: deferral, document_id: inv-2, debit: "1900", credit: "6837", amount_cents: 337000, cost_centre: "4000"}
+  why: >-
+    2028 is a leap year, so February 2028 ends on the 29th. inv-1 ends on 29.02.2028, the month's last day: no
+    deferral. inv-2: 12 months from 01.02.2028 = 01.02.2028-31.01.2029 = 366 days (contains 29.02.2028); after
+    29.02.2028: 366 - 29 = 337. 366000 x 337 / 366 = 337000 exactly.
+
+- id: close-10
+  kind: close
+  month: "2027-12"
+  materiality_cents: 50000
+  documents:
+    - id: inv-1
+      supplier_id: s-1
+      supplier_name: Versicherungsdienst Hellweg AG
+      date: "2027-12-15"
+      net_total: 500000
+      notes: "Versicherungszeitraum 15.12.2027 – 14.12.2028, Inhaltsversicherung"
+      lines: [{net: 500000}]
+      coding: [{account: "6400", cost_centre: "1000"}]
+  history: []
+  duplicates: []
+  expect:
+    entries:
+      - {type: deferral, document_id: inv-1, debit: "1900", credit: "6400", amount_cents: 476776, cost_centre: "1000"}
+  why: >-
+    Period across a leap day. 15.12.2027-14.12.2028 = 17 (15-31 Dec 2027) + 349 (01.01.-14.12.2028, leap year:
+    335 to 30 Nov + 14) = 366 days; after 31.12.2027: 349. 500000 x 349 / 366 = 476775.956 -> 476776.
+
+- id: close-11
+  kind: close
+  month: "2027-01"
+  materiality_cents: 75000
+  documents:
+    - id: inv-1
+      supplier_id: s-1
+      supplier_name: Fachverlag Ostseeblick GmbH
+      date: "2027-01-07"
+      net_total: 75000
+      notes: "Bezugszeitraum 01.01.2027 - 31.12.2027"
+      lines: [{net: 75000}]
+      coding: [{account: "6820", cost_centre: "1000"}]
+    - id: inv-2
+      supplier_id: s-2
+      supplier_name: Datenportal Rheinaue GmbH
+      date: "2027-01-07"
+      net_total: 74999
+      notes: "Bezugszeitraum 01.01.2027 - 31.12.2027"
+      lines: [{net: 74999}]
+      coding: [{account: "6820", cost_centre: "1000"}]
+    - id: inv-3
+      supplier_id: s-3
+      supplier_name: Beratungsgesellschaft Kaltenbach mbH
+      date: "2027-01-29"
+      net_total: 900000
+      notes: "Leistungszeitraum 01/2027"
+      lines: [{net: 900000}]
+      coding: [{account: "6825", cost_centre: "1000"}]
+  history: []
+  duplicates: []
+  expect:
+    entries:
+      - {type: deferral, document_id: inv-1, debit: "1900", credit: "6820", amount_cents: 68630, cost_centre: "1000"}
+  why: >-
+    Materiality 75000. inv-1 net 75000 is exactly at the threshold ('at least'): 01.01.-31.12.2027 = 365 days,
+    after 31.01.2027: 334. 75000 x 334 / 365 = 68630.137 -> 68630. inv-2 net 74999 is one cent below: no
+    deferral. inv-3 names only one month (01/2027): no period beyond the month, no deferral despite its size.
+
+- id: close-12
+  kind: close
+  month: "2026-12"
+  materiality_cents: 50000
+  documents:
+    - id: inv-1
+      supplier_id: s-1
+      supplier_name: Sicherheitssoftware Wolfsberg GmbH
+      date: "2026-12-01"
+      net_total: 55000
+      notes: "Leistungszeitraum vom 01.12.2026 bis 30.11.2027 (Lizenz und Schulungsportal)"
+      lines: [{net: 40000}, {net: 15000}]
+      coding: [{account: "6837", cost_centre: "4000"}, {account: "6815", cost_centre: "4100"}]
+  history: []
+  duplicates: []
+  expect:
+    entries:
+      - {type: deferral, document_id: inv-1, debit: "1900", credit: "6837", amount_cents: 36603, cost_centre: "4000"}
+      - {type: deferral, document_id: inv-1, debit: "1900", credit: "6815", amount_cents: 13726, cost_centre: "4000"}
+  why: >-
+    Materiality is tested on the invoice's total net (55000 >= 50000), not per account, so both accounts get an
+    entry although each is below 50000. 365 days, 334 after 31.12.2026. 6837: 40000 x 334 / 365 = 36602.740 ->
+    36603. 6815: 15000 x 334 / 365 = 13726.027 -> 13726. Cost centre is the first line's (4000) for both
+    entries, even though the 6815 line was booked to 4100.
+
+- id: close-13
+  kind: close
+  month: "2027-01"
+  materiality_cents: 50000
+  documents:
+    - id: inv-1
+      supplier_id: s-1
+      supplier_name: Kommunikationsplattform Eiderstedt GmbH
+      date: "2027-01-15"
+      net_total: 210000
+      notes: "Term: Jan 15, 2027 – Jan 14, 2028"
+      lines: [{net: 120000}, {net: 30000}, {net: 60000}]
+      coding:
+        - {account: "6837", cost_centre: "3000"}
+        - {account: "6805", cost_centre: "3100"}
+        - {account: "6837", cost_centre: "3200"}
+  history: []
+  duplicates: []
+  expect:
+    entries:
+      - {type: deferral, document_id: inv-1, debit: "1900", credit: "6837", amount_cents: 171616, cost_centre: "3000"}
+      - {type: deferral, document_id: inv-1, debit: "1900", credit: "6805", amount_cents: 28603, cost_centre: "3000"}
+  why: >-
+    One entry per expense account: lines 1 and 3 are both 6837 (120000 + 60000 = 180000). 15.01.2027-14.01.2028
+    = 17 + 348 = 365 days; after 31.01.2027: 01.02.2027-14.01.2028 = 334 + 14 = 348. 6837: 180000 x 348 / 365 =
+    171616.438 -> 171616. 6805: 30000 x 348 / 365 = 28602.740 -> 28603. Cost centre 3000 (first line) for both.
+
+- id: close-14
+  kind: close
+  month: "2026-12"
+  materiality_cents: 50000
+  documents:
+    - id: inv-1
+      supplier_id: s-1
+      supplier_name: Lernplattform Burgholz GmbH
+      date: "2026-12-02"
+      net_total: 180000
+      notes: "Leistungszeitraum 01.12.2026 – 30.11.2027"
+      lines: [{net: 180000}]
+      coding: [{account: "6837", cost_centre: "4000"}]
+    - id: inv-2
+      supplier_id: s-1
+      supplier_name: Lernplattform Burgholz GmbH
+      date: "2026-12-16"
+      net_total: 180000
+      notes: "Leistungszeitraum 01.12.2026 – 30.11.2027"
+      lines: [{net: 180000}]
+      coding: [{account: "6837", cost_centre: "4000"}]
+  history: []
+  duplicates: [inv-2]
+  expect:
+    entries:
+      - {type: deferral, document_id: inv-1, debit: "1900", credit: "6837", amount_cents: 164712, cost_centre: "4000"}
+  why: >-
+    inv-2 is the same invoice sent again and the checks found it a duplicate: no deferral for it. inv-1:
+    365 days, 334 after 31.12.2026; 180000 x 334 / 365 = 164712.329 -> 164712.
+
+- id: close-15
+  kind: close
+  month: "2026-12"
+  materiality_cents: 50000
+  documents:
+    - id: inv-1
+      supplier_id: s-1
+      supplier_name: Bueromoebel Erlengrund GmbH
+      date: "2026-12-03"
+      net_total: 280000
+      notes: "Lieferdatum 03.12.2026 – zahlbar bis 02.01.2027 ohne Abzug"
+      lines: [{net: 280000}]
+      coding: [{account: "6845", cost_centre: "1000"}]
+    - id: inv-2
+      supplier_id: s-2
+      supplier_name: Drucksachen Pappelallee GmbH
+      date: "2026-12-10"
+      net_total: 64000
+      notes: "Preise gültig vom 01.12.2026 bis 31.03.2027. Lieferung erfolgte am 10.12.2026."
+      lines: [{net: 64000}]
+      coding: [{account: "6800", cost_centre: "1000"}]
+    - id: inv-3
+      supplier_id: s-3
+      supplier_name: Tagungshotel Seerose GmbH
+      date: "2026-12-12"
+      net_total: 120000
+      notes: "Ihre Buchung vom 15.10.2026 – Veranstaltung am 11.12.2026"
+      lines: [{net: 120000}]
+      coding: [{account: "6640", cost_centre: "5000"}]
+    - id: inv-4
+      supplier_id: s-4
+      supplier_name: Messtechnik Rabenstein GmbH
+      date: "2026-12-14"
+      net_total: 90000
+      notes: "Order 2026-12-01 / Delivery 2027-01-15"
+      lines: [{net: 90000}]
+      coding: [{account: "6845", cost_centre: "2000"}]
+  history: []
+  duplicates: []
+  expect:
+    entries: []
+  why: >-
+    Notes that only look like periods. Each holds two dates, but none states a service period: inv-1 a delivery
+    date and a payment due date; inv-2 the validity of a price list for a delivered order; inv-3 a booking date
+    and an event day; inv-4 an order date and a delivery date (goods, no service period). The agent never
+    guesses dates and defers only what a stated service period puts after the month, so no entries. All nets
+    are >= 50000, so materiality is not what stops them.
+
+- id: close-16
+  kind: close
+  month: "2026-12"
+  materiality_cents: 50000
+  documents:
+    - id: inv-1
+      supplier_id: s-1
+      supplier_name: Planungssoftware Hirschau GmbH
+      date: "2026-12-10"
+      net_total: 240000
+      notes: "Jahreslizenz 2027"
+      lines: [{net: 240000}]
+      coding: [{account: "6837", cost_centre: "4000"}]
+    - id: inv-2
+      supplier_id: s-2
+      supplier_name: Aufzugswartung Steinbruch GmbH
+      date: "2026-12-15"
+      net_total: 120000
+      notes: "Wartungspauschale Q1/2027"
+      lines: [{net: 120000}]
+      coding: [{account: "6460", cost_centre: "1000"}]
+    - id: inv-3
+      supplier_id: s-3
+      supplier_name: Fuhrparkservice Kiesgrube GmbH
+      date: "2026-12-18"
+      net_total: 90000
+      notes: "Vertragsbeginn ab 01.01.2027, Vorauszahlung"
+      lines: [{net: 90000}]
+      coding: [{account: "6520", cost_centre: "1000"}]
+    - id: inv-4
+      supplier_id: s-4
+      supplier_name: Fachportal Recht und Steuer GmbH
+      date: "2026-12-20"
+      net_total: 60000
+      notes: "Annual subscription 2027"
+      lines: [{net: 60000}]
+      coding: [{account: "6820", cost_centre: "1000"}]
+  history: []
+  duplicates: []
+  expect:
+    entries: []
+  why: >-
+    The contract says a named year ('Jahreslizenz 2027', 'Annual subscription 2027'), a named quarter ('Q1/2027')
+    and a start with neither an end nor a length ('ab 01.01.2027') are not stated periods. No entries, although an
+    accountant would book these in advance by hand; that is outside the agent's contract.
+
+- id: close-17
+  kind: close
+  month: "2027-01"
+  materiality_cents: 50000
+  documents:
+    - id: inv-1
+      supplier_id: s-1
+      supplier_name: Videokonferenz Lerchenfeld GmbH
+      date: "2027-01-10"
+      net_total: 250000
+      notes: "6-month term starting 10 January 2027"
+      lines: [{net: 250000}]
+      coding: [{account: "6837", cost_centre: "4000"}]
+    - id: inv-2
+      supplier_id: s-2
+      supplier_name: Lagerlogistik Baerental GmbH
+      date: "2027-01-02"
+      net_total: 450000
+      notes: "Stellplatzmiete, Nutzungsdauer: 90 Tage ab dem 01.01.2027"
+      lines: [{net: 450000}]
+      coding: [{account: "6310", cost_centre: "1000"}]
+  history: []
+  duplicates: []
+  expect:
+    entries:
+      - {type: deferral, document_id: inv-1, debit: "1900", credit: "6837", amount_cents: 219613, cost_centre: "4000"}
+      - {type: deferral, document_id: inv-2, debit: "1900", credit: "6310", amount_cents: 295000, cost_centre: "1000"}
+  why: >-
+    Start and length in English months and in German days. inv-1: 6 months from 10.01.2027 = 10.01.2027-09.07.2027
+    = 22 + 28 + 31 + 30 + 31 + 30 + 9 = 181 days; after 31.01.2027: 181 - 22 = 159. 250000 x 159 / 181 =
+    219613.260 -> 219613. inv-2: 90 days from 01.01.2027, the start day being day 1 (as '12 Monate ab dem
+    15.11.2026' ends on 14.11.2027) = 01.01.-31.03.2027 (31 + 28 + 31 = 90); after 31.01.2027: 59. 450000 x 59 /
+    90 = 295000 exactly. A length in days is not among the contract's examples; see README.
+
+- id: close-18
+  kind: close
+  month: "2026-12"
+  materiality_cents: 50000
+  documents:
+    - id: inv-1
+      supplier_id: s-1
+      supplier_name: Kaeltetechnik Schwanenteich GmbH
+      date: "2026-12-01"
+      net_total: 100001
+      notes: "Leistungszeitraum 01.12.2026–31.01.2027"
+      lines: [{net: 100001}]
+      coding: [{account: "6460", cost_centre: "2000"}]
+  history: []
+  duplicates: []
+  expect:
+    entries:
+      - {type: deferral, document_id: inv-1, debit: "1900", credit: "6460", amount_cents: 50001, cost_centre: "2000"}
+  why: >-
+    Exact half cent. 01.12.2026-31.01.2027 = 62 days, 31 after 31.12.2026. 100001 x 31 / 62 = 50000.5, which rounds
+    away from zero to 50001 (banker's rounding would give 50000).
+
+- id: close-19
+  kind: close
+  month: "2026-12"
+  materiality_cents: 50000
+  documents:
+    - id: inv-1
+      supplier_id: s-1
+      supplier_name: Thamesbridge Data Ltd
+      date: "2026-12-15"
+      net_total: 182000
+      notes: "Period: 15/12/2026 - 14/06/2027"
+      lines: [{net: 182000}]
+      coding: [{account: "6837", cost_centre: "4000"}]
+    - id: inv-2
+      supplier_id: s-2
+      supplier_name: Heizungsbau Kronsberg GmbH
+      date: "2026-12-01"
+      net_total: 91000
+      notes: "Wartungspauschale für den Zeitraum 01.12.2026 bis einschl. 31.05.2027"
+      lines: [{net: 91000}]
+      coding: [{account: "6460", cost_centre: "2000"}]
+  history: []
+  duplicates: []
+  expect:
+    entries:
+      - {type: deferral, document_id: inv-1, debit: "1900", credit: "6837", amount_cents: 165000, cost_centre: "4000"}
+      - {type: deferral, document_id: inv-2, debit: "1900", credit: "6460", amount_cents: 75500, cost_centre: "2000"}
+  why: >-
+    inv-1: British day/month/year with slashes; both days (15, 14) exceed 12, so the reading is unambiguous.
+    15.12.2026-14.06.2027 = 17 + 31 + 28 + 31 + 30 + 31 + 14 = 182 days; after 31.12.2026: 165. 182000 x 165 / 182
+    = 165000. inv-2: 'bis einschl.' (inclusive) 01.12.2026-31.05.2027 = 31 + 31 + 28 + 31 + 30 + 31 = 182 days;
+    after: 151. 91000 x 151 / 182 = 75500.
+
+- id: close-20
+  kind: close
+  month: "2026-12"
+  materiality_cents: 50000
+  documents:
+    - id: inv-1
+      supplier_id: s-11
+      supplier_name: Reinigungsdienst Sauberland KG
+      date: "2026-12-28"
+      net_total: 45000
+      notes: "Unterhaltsreinigung 12/2026"
+      lines: [{net: 45000}]
+      coding: [{account: "6330", cost_centre: "1000"}]
+  history:
+    - {id: h-1, supplier_id: s-10, supplier_name: Netzwerk Elbtal GmbH, month: "2026-09", date: "2026-09-03",
+       net_total: 30000, notes: "Internet-Standleitung 09/2026", coding: [{account: "6805", cost_centre: "1000"}]}
+    - {id: h-2, supplier_id: s-10, supplier_name: Netzwerk Elbtal GmbH, month: "2026-10", date: "2026-10-02",
+       net_total: 31000, notes: "Internet-Standleitung 10/2026", coding: [{account: "6805", cost_centre: "1000"}]}
+    - {id: h-3, supplier_id: s-10, supplier_name: Netzwerk Elbtal GmbH, month: "2026-11", date: "2026-11-04",
+       net_total: 29500, notes: "Internet-Standleitung 11/2026", coding: [{account: "6805", cost_centre: "1000"}]}
+    - {id: h-4, supplier_id: s-11, supplier_name: Reinigungsdienst Sauberland KG, month: "2026-09", date: "2026-09-28",
+       net_total: 45000, notes: "Unterhaltsreinigung 09/2026", coding: [{account: "6330", cost_centre: "1000"}]}
+    - {id: h-5, supplier_id: s-11, supplier_name: Reinigungsdienst Sauberland KG, month: "2026-10", date: "2026-10-27",
+       net_total: 45000, notes: "Unterhaltsreinigung 10/2026", coding: [{account: "6330", cost_centre: "1000"}]}
+    - {id: h-6, supplier_id: s-11, supplier_name: Reinigungsdienst Sauberland KG, month: "2026-11", date: "2026-11-28",
+       net_total: 45000, notes: "Unterhaltsreinigung 11/2026", coding: [{account: "6330", cost_centre: "1000"}]}
+  duplicates: []
+  expect:
+    entries:
+      - {type: accrual, supplier_id: s-10, debit: "6805", credit: "3070", amount_cents: 30167, cost_centre: "1000"}
+  why: >-
+    s-10 billed once in each of Sep, Oct, Nov; nets 30000/31000/29500: mean 30166.67, population sd 623.61, CV
+    0.021 <= 0.25; days 3, 2, 4 (spread 2 <= 10); no December invoice -> accrual of (30000 + 31000 + 29500) / 3 =
+    30166.667 -> 30167 to 6805, cc 1000. s-11 is just as regular but already billed this month (inv-1): no accrual.
+    inv-1 names one month only, so no deferral.
+
+- id: close-21
+  kind: close
+  month: "2027-01"
+  materiality_cents: 50000
+  documents: []
+  history:
+    - {id: h-1, supplier_id: s-20, supplier_name: IT-Service Havelland GmbH, month: "2026-09", date: "2026-09-07",
+       net_total: 11800, notes: "Managed Service 09/2026", coding: [{account: "6495", cost_centre: "2000"}]}
+    - {id: h-2, supplier_id: s-20, supplier_name: IT-Service Havelland GmbH, month: "2026-10", date: "2026-10-05",
+       net_total: 12000, notes: "Managed Service 10/2026", coding: [{account: "6495", cost_centre: "2000"}]}
+    - {id: h-3, supplier_id: s-20, supplier_name: IT-Service Havelland GmbH, month: "2026-12", date: "2026-12-06",
+       net_total: 12500, notes: "Managed Service 12/2026", coding: [{account: "6495", cost_centre: "2000"}]}
+  duplicates: []
+  expect:
+    entries:
+      - {type: accrual, supplier_id: s-20, debit: "6495", credit: "3070", amount_cents: 12100, cost_centre: "2000"}
+  why: >-
+    One missing month. The three months before January 2027 are Oct, Nov, Dec; s-20 billed once in Oct and once in
+    Dec (2 of 3, one invoice each) and not in Nov. Its three latest invoices are Dec, Oct and Sep: nets
+    12500/12000/11800, mean 12100, sd 294.39, CV 0.024; days 6, 5, 7 (spread 2). No January invoice -> accrual
+    (11800 + 12000 + 12500) / 3 = 12100 exactly, account and cost centre of the latest (Dec) invoice.
+
+- id: close-22
+  kind: close
+  month: "2026-12"
+  materiality_cents: 50000
+  documents: []
+  history:
+    - {id: h-1, supplier_id: s-30, supplier_name: Kopiertechnik Saalfeld GmbH, month: "2026-08", date: "2026-08-10",
+       net_total: 20000, notes: "Kopierer-Miete inkl. Klickpreise 08/2026", coding: [{account: "6800", cost_centre: "4000"}]}
+    - {id: h-2, supplier_id: s-30, supplier_name: Kopiertechnik Saalfeld GmbH, month: "2026-09", date: "2026-09-12",
+       net_total: 20500, notes: "Kopierer-Miete inkl. Klickpreise 09/2026", coding: [{account: "6800", cost_centre: "4000"}]}
+    - {id: h-3, supplier_id: s-30, supplier_name: Kopiertechnik Saalfeld GmbH, month: "2026-10", date: "2026-10-11",
+       net_total: 21000, notes: "Kopierer-Miete inkl. Klickpreise 10/2026", coding: [{account: "6815", cost_centre: "4100"}]}
+  duplicates: []
+  expect:
+    entries:
+      - {type: accrual, supplier_id: s-30, debit: "6815", credit: "3070", amount_cents: 20500, cost_centre: "4100"}
+  why: >-
+    The three months before December are Sep, Oct, Nov; s-30 billed once in Sep and once in Oct (2 of 3) and not
+    in Nov, which still meets 'at least two of the three'. Three latest: Oct, Sep, Aug: nets 21000/20500/20000,
+    CV 0.020; days 11, 12, 10 (spread 2). Accrual for December only: (20000 + 20500 + 21000) / 3 = 20500. Debit
+    the latest invoice's account 6815 and its cost centre 4100 (the earlier invoices were coded 6800/4000).
+    The contract proposes nothing for the missing November itself.
+
+- id: close-23
+  kind: close
+  month: "2027-01"
+  materiality_cents: 50000
+  documents: []
+  history:
+    - {id: h-1, supplier_id: s-40, supplier_name: Kurierdienst Blitzrad GmbH, month: "2026-10", date: "2026-10-14",
+       net_total: 8000, notes: "Kurierfahrten 10/2026", coding: [{account: "6740", cost_centre: "1000"}]}
+    - {id: h-2, supplier_id: s-40, supplier_name: Kurierdienst Blitzrad GmbH, month: "2026-11", date: "2026-11-03",
+       net_total: 8200, notes: "Kurierfahrten 01.-15.11.2026", coding: [{account: "6740", cost_centre: "1000"}]}
+    - {id: h-3, supplier_id: s-40, supplier_name: Kurierdienst Blitzrad GmbH, month: "2026-11", date: "2026-11-17",
+       net_total: 7900, notes: "Kurierfahrten 16.-30.11.2026", coding: [{account: "6740", cost_centre: "1000"}]}
+    - {id: h-4, supplier_id: s-40, supplier_name: Kurierdienst Blitzrad GmbH, month: "2026-12", date: "2026-12-15",
+       net_total: 8100, notes: "Kurierfahrten 12/2026", coding: [{account: "6740", cost_centre: "1000"}]}
+    - {id: h-5, supplier_id: s-41, supplier_name: Steuerberatung Kranichfeld PartG mbB, month: "2026-04", date: "2026-04-02",
+       net_total: 150000, notes: "Quartalspauschale I/2026", coding: [{account: "6830", cost_centre: "1000"}]}
+    - {id: h-6, supplier_id: s-41, supplier_name: Steuerberatung Kranichfeld PartG mbB, month: "2026-07", date: "2026-07-01",
+       net_total: 150000, notes: "Quartalspauschale II/2026", coding: [{account: "6830", cost_centre: "1000"}]}
+    - {id: h-7, supplier_id: s-41, supplier_name: Steuerberatung Kranichfeld PartG mbB, month: "2026-10", date: "2026-10-01",
+       net_total: 150000, notes: "Quartalspauschale III/2026", coding: [{account: "6830", cost_centre: "1000"}]}
+    - {id: h-8, supplier_id: s-42, supplier_name: Gartenpflege Immergruen GmbH, month: "2026-06", date: "2026-06-20",
+       net_total: 18000, notes: "Gartenpflege", coding: [{account: "6335", cost_centre: "1000"}]}
+    - {id: h-9, supplier_id: s-42, supplier_name: Gartenpflege Immergruen GmbH, month: "2026-08", date: "2026-08-21",
+       net_total: 18000, notes: "Gartenpflege", coding: [{account: "6335", cost_centre: "1000"}]}
+    - {id: h-10, supplier_id: s-42, supplier_name: Gartenpflege Immergruen GmbH, month: "2026-12", date: "2026-12-19",
+       net_total: 18000, notes: "Gartenpflege und Winterdienst", coding: [{account: "6335", cost_centre: "1000"}]}
+  duplicates: []
+  expect:
+    entries: []
+  why: >-
+    Irregular billers (window Oct, Nov, Dec 2026). s-40 sent two invoices in November: not exactly one in each
+    month it billed -> not monthly. s-41 bills quarterly: only October in the window (1 of 3). s-42 billed only in
+    December in the window (1 of 3). No accruals, although all three have similar amounts.
+
+- id: close-24
+  kind: close
+  month: "2026-12"
+  materiality_cents: 50000
+  documents: []
+  history:
+    - {id: h-1, supplier_id: s-50, supplier_name: Energiekontor Talgrund GmbH, month: "2026-09", date: "2026-09-05",
+       net_total: 22500, notes: "Stromabschlag 09/2026", coding: [{account: "6325", cost_centre: "1000"}]}
+    - {id: h-2, supplier_id: s-50, supplier_name: Energiekontor Talgrund GmbH, month: "2026-10", date: "2026-10-05",
+       net_total: 30000, notes: "Stromabschlag 10/2026", coding: [{account: "6325", cost_centre: "1000"}]}
+    - {id: h-3, supplier_id: s-50, supplier_name: Energiekontor Talgrund GmbH, month: "2026-11", date: "2026-11-05",
+       net_total: 41500, notes: "Stromabschlag 11/2026", coding: [{account: "6325", cost_centre: "1000"}]}
+    - {id: h-4, supplier_id: s-51, supplier_name: Waermeservice Birkenau GmbH, month: "2026-09", date: "2026-09-08",
+       net_total: 24000, notes: "Fernwaerme 09/2026", coding: [{account: "6325", cost_centre: "1000"}]}
+    - {id: h-5, supplier_id: s-51, supplier_name: Waermeservice Birkenau GmbH, month: "2026-10", date: "2026-10-08",
+       net_total: 30000, notes: "Fernwaerme 10/2026", coding: [{account: "6325", cost_centre: "1000"}]}
+    - {id: h-6, supplier_id: s-51, supplier_name: Waermeservice Birkenau GmbH, month: "2026-11", date: "2026-11-08",
+       net_total: 43500, notes: "Fernwaerme 11/2026", coding: [{account: "6325", cost_centre: "1000"}]}
+  duplicates: []
+  expect:
+    entries:
+      - {type: accrual, supplier_id: s-50, debit: "6325", credit: "3070", amount_cents: 31333, cost_centre: "1000"}
+  why: >-
+    Coefficient of variation just either side of 0.25. s-50: nets 22500/30000/41500, mean 31333.33, population sd
+    7813.81, CV 0.24938 <= 0.25 -> monthly; days all 5. Accrual 94000 / 3 = 31333.333 -> 31333. s-51: nets
+    24000/30000/43500, mean 32500, sd 8154.75, CV 0.25092 > 0.25 -> not similar amounts, no accrual.
+
+- id: close-25
+  kind: close
+  month: "2027-01"
+  materiality_cents: 50000
+  documents: []
+  history:
+    - {id: h-1, supplier_id: s-60, supplier_name: Sicherheitsdienst Wallgraben GmbH, month: "2026-10", date: "2026-10-01",
+       net_total: 15470, notes: "Alarmaufschaltung 10/2026", coding: [{account: "6305", cost_centre: "1000"}]}
+    - {id: h-2, supplier_id: s-60, supplier_name: Sicherheitsdienst Wallgraben GmbH, month: "2026-11", date: "2026-11-11",
+       net_total: 15470, notes: "Alarmaufschaltung 11/2026", coding: [{account: "6305", cost_centre: "1000"}]}
+    - {id: h-3, supplier_id: s-60, supplier_name: Sicherheitsdienst Wallgraben GmbH, month: "2026-12", date: "2026-12-06",
+       net_total: 15470, notes: "Alarmaufschaltung 12/2026", coding: [{account: "6305", cost_centre: "1000"}]}
+    - {id: h-4, supplier_id: s-61, supplier_name: Telefonservice Brueckenau GmbH, month: "2026-10", date: "2026-10-01",
+       net_total: 8990, notes: "Telefonzentrale 10/2026", coding: [{account: "6805", cost_centre: "1000"}]}
+    - {id: h-5, supplier_id: s-61, supplier_name: Telefonservice Brueckenau GmbH, month: "2026-11", date: "2026-11-12",
+       net_total: 8990, notes: "Telefonzentrale 11/2026", coding: [{account: "6805", cost_centre: "1000"}]}
+    - {id: h-6, supplier_id: s-61, supplier_name: Telefonservice Brueckenau GmbH, month: "2026-12", date: "2026-12-05",
+       net_total: 8990, notes: "Telefonzentrale 12/2026", coding: [{account: "6805", cost_centre: "1000"}]}
+  duplicates: []
+  expect:
+    entries:
+      - {type: accrual, supplier_id: s-60, debit: "6305", credit: "3070", amount_cents: 15470, cost_centre: "1000"}
+  why: >-
+    Day-of-month spread at the boundary; equal amounts (CV 0). s-60: days 1, 11, 6 -> 11 - 1 = 10 apart, 'at most
+    10' -> monthly; accrual 15470 x 3 / 3 = 15470. s-61: days 1, 12, 5 -> 12 - 1 = 11 apart > 10 -> no accrual.
+
+- id: close-26
+  kind: close
+  month: "2026-12"
+  materiality_cents: 50000
+  documents: []
+  history:
+    - {id: h-1, supplier_id: s-70, supplier_name: Kanzlei Rosenhag Rechtsanwaelte, month: "2026-09", date: "2026-09-30",
+       net_total: 120000, notes: "Monatspauschale Arbeitsrecht 09/2026", coding: [{account: "6825", cost_centre: "1000"}]}
+    - {id: h-2, supplier_id: s-70, supplier_name: Kanzlei Rosenhag Rechtsanwaelte, month: "2026-10", date: "2026-10-30",
+       net_total: 120000, notes: "Monatspauschale Arbeitsrecht 10/2026", coding: [{account: "6825", cost_centre: "1000"}]}
+    - {id: h-3, supplier_id: s-70, supplier_name: Kanzlei Rosenhag Rechtsanwaelte, month: "2026-11", date: "2026-11-27",
+       net_total: 120000, notes: "Monatspauschale 11/2026. Hiermit rechnen wir das Mandat abschließend ab.",
+       coding: [{account: "6825", cost_centre: "1000"}]}
+    - {id: h-4, supplier_id: s-71, supplier_name: Paketbox Systems GmbH, month: "2026-09", date: "2026-09-15",
+       net_total: 4900, notes: "Plan Business, September 2026", coding: [{account: "6837", cost_centre: "4000"}]}
+    - {id: h-5, supplier_id: s-71, supplier_name: Paketbox Systems GmbH, month: "2026-10", date: "2026-10-15",
+       net_total: 4900, notes: "Plan Business, October 2026", coding: [{account: "6837", cost_centre: "4000"}]}
+    - {id: h-6, supplier_id: s-71, supplier_name: Paketbox Systems GmbH, month: "2026-11", date: "2026-11-15",
+       net_total: 4900, notes: "Plan Business, November 2026. As requested, your plan has been closed; no further invoices will be issued.",
+       coding: [{account: "6837", cost_centre: "4000"}]}
+    - {id: h-7, supplier_id: s-72, supplier_name: Wartungsdienst Kiefernweg GmbH, month: "2026-09", date: "2026-09-02",
+       net_total: 33000, notes: "Wartung Druckluftanlage 09/2026", coding: [{account: "6460", cost_centre: "2000"}]}
+    - {id: h-8, supplier_id: s-72, supplier_name: Wartungsdienst Kiefernweg GmbH, month: "2026-10", date: "2026-10-02",
+       net_total: 33000, notes: "Wartung Druckluftanlage 10/2026", coding: [{account: "6460", cost_centre: "2000"}]}
+    - {id: h-9, supplier_id: s-72, supplier_name: Wartungsdienst Kiefernweg GmbH, month: "2026-11", date: "2026-11-03",
+       net_total: 33000, notes: "Wartung Druckluftanlage 11/2026. Der Wartungsvertrag endete mit Ablauf des 30.11.2026.",
+       coding: [{account: "6460", cost_centre: "2000"}]}
+    - {id: h-10, supplier_id: s-73, supplier_name: Leasingdienst Uferweg GmbH, month: "2026-09", date: "2026-09-01",
+       net_total: 52000, notes: "Leasingrate 09/2026", coding: [{account: "6560", cost_centre: "1000"}]}
+    - {id: h-11, supplier_id: s-73, supplier_name: Leasingdienst Uferweg GmbH, month: "2026-10", date: "2026-10-01",
+       net_total: 52000, notes: "Leasingrate 10/2026", coding: [{account: "6560", cost_centre: "1000"}]}
+    - {id: h-12, supplier_id: s-73, supplier_name: Leasingdienst Uferweg GmbH, month: "2026-11", date: "2026-11-02",
+       net_total: 52000, notes: "Leasingrate 11/2026. Leasingende: Das Fahrzeug wurde am 28.11.2026 zurückgegeben.",
+       coding: [{account: "6560", cost_centre: "1000"}]}
+  duplicates: []
+  expect:
+    entries: []
+  why: >-
+    Four suppliers that would otherwise qualify (one invoice in each of Sep, Oct, Nov; equal nets, CV 0; day
+    spreads 30-27 = 3, 0, 3-2 = 1, 2-1 = 1), but each latest invoice says the contract has ended, in wordings not
+    listed in the contract: 'rechnen das Mandat abschließend ab' (final bill of the engagement), 'plan has been
+    closed; no further invoices will be issued', 'Wartungsvertrag endete mit Ablauf des 30.11.2026', 'Leasingende:
+    Fahrzeug zurückgegeben'. No accruals.
+
+- id: close-27
+  kind: close
+  month: "2027-01"
+  materiality_cents: 50000
+  documents: []
+  history:
+    - {id: h-1, supplier_id: s-80, supplier_name: Sicherheitstechnik Kalkberg GmbH, month: "2026-10", date: "2026-10-02",
+       net_total: 9900, notes: "Leistungszeitraum 10/2026", coding: [{account: "6305", cost_centre: "1000"}]}
+    - {id: h-2, supplier_id: s-80, supplier_name: Sicherheitstechnik Kalkberg GmbH, month: "2026-11", date: "2026-11-02",
+       net_total: 9900, notes: "Leistungszeitraum 11/2026", coding: [{account: "6305", cost_centre: "1000"}]}
+    - {id: h-3, supplier_id: s-80, supplier_name: Sicherheitstechnik Kalkberg GmbH, month: "2026-12", date: "2026-12-02",
+       net_total: 9900, notes: "Leistungszeitraum 12/2026. Kündigungsfrist: 3 Monate zum Quartalsende.",
+       coding: [{account: "6305", cost_centre: "1000"}]}
+    - {id: h-4, supplier_id: s-81, supplier_name: Softwarepflege Heidenau GmbH, month: "2026-10", date: "2026-10-15",
+       net_total: 24000, notes: "Pflegegebuehr 10/2026", coding: [{account: "6495", cost_centre: "2000"}]}
+    - {id: h-5, supplier_id: s-81, supplier_name: Softwarepflege Heidenau GmbH, month: "2026-11", date: "2026-11-15",
+       net_total: 24000, notes: "Pflegegebuehr 11/2026", coding: [{account: "6495", cost_centre: "2000"}]}
+    - {id: h-6, supplier_id: s-81, supplier_name: Softwarepflege Heidenau GmbH, month: "2026-12", date: "2026-12-15",
+       net_total: 24000, notes: "Pflegegebuehr 12/2026. Der Vertrag verlängert sich automatisch um weitere 12 Monate, wenn er nicht spätestens 3 Monate vor Ablauf gekündigt wird.",
+       coding: [{account: "6495", cost_centre: "2000"}]}
+    - {id: h-7, supplier_id: s-82, supplier_name: Brightline Voice Services GmbH, month: "2026-10", date: "2026-10-20",
+       net_total: 5900, notes: "Cloud telephony, October 2026", coding: [{account: "6805", cost_centre: "1000"}]}
+    - {id: h-8, supplier_id: s-82, supplier_name: Brightline Voice Services GmbH, month: "2026-11", date: "2026-11-20",
+       net_total: 5900, notes: "Cloud telephony, November 2026", coding: [{account: "6805", cost_centre: "1000"}]}
+    - {id: h-9, supplier_id: s-82, supplier_name: Brightline Voice Services GmbH, month: "2026-12", date: "2026-12-21",
+       net_total: 5900, notes: "Cloud telephony, December 2026. From 1 February 2027 your monthly fee becomes EUR 65.00; your contract continues unchanged and can be cancelled with one month's notice.",
+       coding: [{account: "6805", cost_centre: "1000"}]}
+  duplicates: []
+  expect:
+    entries:
+      - {type: accrual, supplier_id: s-80, debit: "6305", credit: "3070", amount_cents: 9900, cost_centre: "1000"}
+      - {type: accrual, supplier_id: s-81, debit: "6495", credit: "3070", amount_cents: 24000, cost_centre: "2000"}
+      - {type: accrual, supplier_id: s-82, debit: "6805", credit: "3070", amount_cents: 5900, cost_centre: "1000"}
+  why: >-
+    Notes that mention cancellation but do not end the contract: a notice period, an automatic renewal unless
+    cancelled, and a price change with the right to cancel. All three billed once in each of Oct, Nov, Dec with
+    equal nets (CV 0) and day spreads 0, 0 and 21 - 20 = 1; no January invoice. Accruals: 9900 x 3 / 3 = 9900;
+    24000; 5900, each to the latest invoice's account and cost centre.
+
+- id: close-28
+  kind: close
+  month: "2027-03"
+  materiality_cents: 50000
+  documents: []
+  history:
+    - {id: h-1, supplier_id: s-90, supplier_name: Archivservice Moorwiese GmbH, month: "2026-12", date: "2026-12-04",
+       net_total: 16000, notes: "Aktenlagerung 12/2026. Kündigung zum 31.12.2026 bestätigt.",
+       coding: [{account: "6850", cost_centre: "3000"}]}
+    - {id: h-2, supplier_id: s-90, supplier_name: Archivservice Moorwiese GmbH, month: "2027-01", date: "2027-01-05",
+       net_total: 16000, notes: "Aktenlagerung 01/2027. Vielen Dank, dass Sie Ihre Kündigung zurückgenommen haben.",
+       coding: [{account: "6850", cost_centre: "3000"}]}
+    - {id: h-3, supplier_id: s-90, supplier_name: Archivservice Moorwiese GmbH, month: "2027-02", date: "2027-02-04",
+       net_total: 16500, notes: "Aktenlagerung 02/2027", coding: [{account: "6850", cost_centre: "3000"}]}
+    - {id: h-4, supplier_id: s-91, supplier_name: Fleetwise Telematics GmbH, month: "2026-12", date: "2026-12-10",
+       net_total: 7400, notes: "Telematics licence, 12 vehicles, December 2026", coding: [{account: "6570", cost_centre: "1000"}]}
+    - {id: h-5, supplier_id: s-91, supplier_name: Fleetwise Telematics GmbH, month: "2027-01", date: "2027-01-11",
+       net_total: 7400, notes: "Telematics licence, 12 vehicles, January 2027", coding: [{account: "6570", cost_centre: "1000"}]}
+    - {id: h-6, supplier_id: s-91, supplier_name: Fleetwise Telematics GmbH, month: "2027-02", date: "2027-02-10",
+       net_total: 7400, notes: "Telematics licence, 12 vehicles, February 2027. This is the final invoice under contract FT-4471.",
+       coding: [{account: "6570", cost_centre: "1000"}]}
+  duplicates: []
+  expect:
+    entries:
+      - {type: accrual, supplier_id: s-90, debit: "6850", credit: "3070", amount_cents: 16167, cost_centre: "3000"}
+  why: >-
+    Window Dec, Jan, Feb. Only the latest invoice decides whether the contract ends. s-90: an older invoice
+    confirmed a cancellation, but the cancellation was withdrawn and the latest (Feb) invoice says nothing about
+    an end; nets 16000/16000/16500, mean 16166.67, sd 235.70, CV 0.0146; days 4, 5, 4 -> accrual (16000 + 16000 + 16500) / 3 = 16166.667
+    -> 16167. s-91: latest invoice is 'the final invoice under contract FT-4471' -> no accrual.
+
+- id: close-29
+  kind: close
+  month: "2027-06"
+  materiality_cents: 100000
+  documents:
+    - id: inv-1
+      supplier_id: s-96
+      supplier_name: Fachportal Steuerwissen GmbH
+      date: "2027-06-01"
+      net_total: 80000
+      notes: "Abonnement vom 01.06.2027 bis 31.05.2028"
+      lines: [{net: 80000}]
+      coding: [{account: "6820", cost_centre: "1000"}]
+  history:
+    - {id: h-1, supplier_id: s-95, supplier_name: Wasserspender Klarbach GmbH, month: "2027-03", date: "2027-03-01",
+       net_total: 4990, notes: "Miete Wasserspender 03/2027", coding: [{account: "6850", cost_centre: "1000"}]}
+    - {id: h-2, supplier_id: s-95, supplier_name: Wasserspender Klarbach GmbH, month: "2027-04", date: "2027-04-01",
+       net_total: 4990, notes: "Miete Wasserspender 04/2027", coding: [{account: "6850", cost_centre: "1000"}]}
+    - {id: h-3, supplier_id: s-95, supplier_name: Wasserspender Klarbach GmbH, month: "2027-05", date: "2027-05-03",
+       net_total: 4990, notes: "Miete Wasserspender 05/2027", coding: [{account: "6850", cost_centre: "1000"}]}
+  duplicates: []
+  expect:
+    entries:
+      - {type: accrual, supplier_id: s-95, debit: "6850", credit: "3070", amount_cents: 4990, cost_centre: "1000"}
+  why: >-
+    Materiality 100000. inv-1 states a period (01.06.2027-31.05.2028) but its net 80000 is below the threshold:
+    no deferral. The materiality condition is written only for deferrals, so the small monthly supplier s-95 is
+    still accrued: one invoice in each of Mar, Apr, May, CV 0, days 1, 1, 3 -> (4990 x 3) / 3 = 4990. See README
+    for this reading.
+
+- id: close-30
+  kind: close
+  month: "2027-01"
+  materiality_cents: 50000
+  documents:
+    - id: inv-1
+      supplier_id: s-101
+      supplier_name: Lizenzhaus Brennerberg GmbH
+      date: "2027-01-08"
+      net_total: 360000
+      notes: "Nutzungszeitraum 2027-01-01 bis 2027-06-30"
+      lines: [{net: 300000}, {net: 60000}]
+      coding: [{account: "6837", cost_centre: "4000"}, {account: "6815", cost_centre: "4300"}]
+    - id: inv-2
+      supplier_id: s-101
+      supplier_name: Lizenzhaus Brennerberg GmbH
+      date: "2027-01-19"
+      net_total: 360000
+      notes: "Nutzungszeitraum 2027-01-01 bis 2027-06-30"
+      lines: [{net: 300000}, {net: 60000}]
+      coding: [{account: "6837", cost_centre: "4000"}, {account: "6815", cost_centre: "4300"}]
+    - id: inv-3
+      supplier_id: s-102
+      supplier_name: Mobilfunk Elsterland GmbH
+      date: "2027-01-04"
+      net_total: 18000
+      notes: "Abrechnungszeitraum 01/2027"
+      lines: [{net: 18000}]
+      coding: [{account: "6805", cost_centre: "1000"}]
+    - id: inv-4
+      supplier_id: s-103
+      supplier_name: Messeagentur Lindwurm GmbH
+      date: "2027-01-22"
+      net_total: 95000
+      notes: "Leistungsdatum: 12.01.2027; Zahlungsziel 30 Tage"
+      lines: [{net: 95000}]
+      coding: [{account: "6600", cost_centre: "5000"}]
+  history:
+    - {id: h-1, supplier_id: s-102, supplier_name: Mobilfunk Elsterland GmbH, month: "2026-10", date: "2026-10-04",
+       net_total: 18000, notes: "Abrechnungszeitraum 10/2026", coding: [{account: "6805", cost_centre: "1000"}]}
+    - {id: h-2, supplier_id: s-102, supplier_name: Mobilfunk Elsterland GmbH, month: "2026-11", date: "2026-11-04",
+       net_total: 18000, notes: "Abrechnungszeitraum 11/2026", coding: [{account: "6805", cost_centre: "1000"}]}
+    - {id: h-3, supplier_id: s-102, supplier_name: Mobilfunk Elsterland GmbH, month: "2026-12", date: "2026-12-04",
+       net_total: 18000, notes: "Abrechnungszeitraum 12/2026", coding: [{account: "6805", cost_centre: "1000"}]}
+    - {id: h-4, supplier_id: s-104, supplier_name: Parkraum Am Wehr GmbH, month: "2026-10", date: "2026-10-01",
+       net_total: 25000, notes: "Stellplatzmiete 10/2026", coding: [{account: "6310", cost_centre: "1000"}]}
+    - {id: h-5, supplier_id: s-104, supplier_name: Parkraum Am Wehr GmbH, month: "2026-11", date: "2026-11-02",
+       net_total: 25000, notes: "Stellplatzmiete 11/2026", coding: [{account: "6310", cost_centre: "1000"}]}
+    - {id: h-6, supplier_id: s-104, supplier_name: Parkraum Am Wehr GmbH, month: "2026-12", date: "2026-12-01",
+       net_total: 25000, notes: "Stellplatzmiete 12/2026", coding: [{account: "6310", cost_centre: "1000"}]}
+    - {id: h-7, supplier_id: s-105, supplier_name: Aktenvernichtung Grauwacke GmbH, month: "2026-10", date: "2026-10-09",
+       net_total: 6000, notes: "Datentonnen-Service 10/2026", coding: [{account: "6850", cost_centre: "1000"}]}
+    - {id: h-8, supplier_id: s-105, supplier_name: Aktenvernichtung Grauwacke GmbH, month: "2026-11", date: "2026-11-09",
+       net_total: 6000, notes: "Datentonnen-Service 11/2026", coding: [{account: "6850", cost_centre: "1000"}]}
+    - {id: h-9, supplier_id: s-105, supplier_name: Aktenvernichtung Grauwacke GmbH, month: "2026-12", date: "2026-12-09",
+       net_total: 6000, notes: "Datentonnen-Service 12/2026. Abschlussrechnung – unser Vertrag endet mit dieser Leistung.",
+       coding: [{account: "6850", cost_centre: "1000"}]}
+  duplicates: [inv-2]
+  expect:
+    entries:
+      - {type: deferral, document_id: inv-1, debit: "1900", credit: "6837", amount_cents: 248619, cost_centre: "4000"}
+      - {type: deferral, document_id: inv-1, debit: "1900", credit: "6815", amount_cents: 49724, cost_centre: "4000"}
+      - {type: accrual, supplier_id: s-104, debit: "6310", credit: "3070", amount_cents: 25000, cost_centre: "1000"}
+  why: >-
+    A full January close. inv-1: ISO dates joined by 'bis', 01.01.-30.06.2027 = 31+28+31+30+31+30 = 181 days;
+    after 31.01.2027: 150. 6837: 300000 x 150 / 181 = 248618.785 -> 248619; 6815: 60000 x 150 / 181 = 49723.757
+    -> 49724; both cost centre 4000 (first line). inv-2 is a duplicate: skipped. inv-3 one month only: no
+    deferral; and s-102 already billed in January: no accrual. inv-4 a performance date and a payment term, no
+    period. s-104: one invoice in each of Oct, Nov, Dec, equal nets, days 1, 2, 1 -> accrual 25000. s-105:
+    latest invoice is an 'Abschlussrechnung' saying the contract ends -> no accrual.
+
+# ---------------------------------------------------------------------------------------------------
+# CHECK CASES
+# ---------------------------------------------------------------------------------------------------
+
+- id: check-01
+  kind: check
+  document:
+    {id: inv-1, kind: invoice, supplier_id: s-1, supplier_country: DE, number: "BK-26-11873", date: "2026-11-20",
+     iban: "DE31270408150412873301",
+     lines: [{description: "Kopierpapier A4 80g, 10 Kartons", net: 4590, vat_rate: 0.19, vat: 872},
+             {description: "Ordner breit, 20 Stück", net: 3180, vat_rate: 0.19, vat: 604}],
+     net_total: 7770, vat_total: 1476, gross_total: 9246}
+  same_month: []
+  history:
+    - {id: h-1, kind: invoice, supplier_id: s-2, supplier_country: DE, number: "BK-26-11873", date: "2026-11-02",
+       iban: "DE69361512205520019874",
+       lines: [{description: "Visitenkarten 500 Stück", net: 3900, vat_rate: 0.19, vat: 741}],
+       net_total: 3900, vat_total: 741, gross_total: 4641}
+  booked_lines:
+    - {supplier_id: s-1, supplier_country: DE, description: "Kopierpapier A4 80g", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Kopierpapier A3", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Kopierpapier A4 recycling", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Ordner schmal", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Ordner breit", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Ordner farbig", vat_rate: 0.19}
+    - {supplier_id: s-2, supplier_country: DE, description: "Visitenkarten 500 Stück", vat_rate: 0.19}
+  suppliers:
+    s-1: {iban: "DE31270408150412873301", bank_changes: []}
+    s-2: {iban: "DE69361512205520019874", bank_changes: []}
+  expect: {issues: []}
+  why: >-
+    Clean. 4590 x 0.19 = 872.10 -> 872; 3180 x 0.19 = 604.20 -> 604; nets 4590 + 3180 = 7770; VAT 872 + 604 =
+    1476; 7770 + 1476 = 9246. IBAN is the one on file. Rates match earlier lines. The earlier invoice with the
+    same number 'BK-26-11873' is from a different supplier (s-2), so it is not a duplicate.
+
+- id: check-02
+  kind: check
+  document:
+    {id: inv-1, kind: invoice, supplier_id: s-1, supplier_country: DE, number: "re 2026/00981", date: "2026-11-24",
+     iban: "DE83750918400049876521",
+     lines: [{description: "Wartung Brandmeldeanlage Halle 2", net: 68000, vat_rate: 0.19, vat: 12920}],
+     net_total: 68000, vat_total: 12920, gross_total: 80920}
+  same_month: []
+  history:
+    - {id: h-1, kind: invoice, supplier_id: s-1, supplier_country: DE, number: "RE-2026-0981", date: "2026-10-28",
+       iban: "DE83750918400049876521",
+       lines: [{description: "Wartung Brandmeldeanlage Halle 2", net: 68000, vat_rate: 0.19, vat: 12920}],
+       net_total: 68000, vat_total: 12920, gross_total: 80920}
+  booked_lines:
+    - {supplier_id: s-1, supplier_country: DE, description: "Wartung Brandmeldeanlage Halle 1", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Wartung Brandmeldeanlage Halle 2", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Wartung Sprinkleranlage", vat_rate: 0.19}
+  suppliers:
+    s-1: {iban: "DE83750918400049876521", bank_changes: []}
+  expect: {issues: [duplicate]}
+  why: >-
+    Same supplier, same number once punctuation, spaces, case and leading zeros are ignored: 'RE-2026-0981' ->
+    're20260981' -> without the leading zero of the last group 're2026981'; 're 2026/00981' -> 're2026981'. The
+    October invoice is the original, this one the duplicate. (27 days apart, so only the number rule applies.)
+    Arithmetic: 68000 x 0.19 = 12920; 68000 + 12920 = 80920.
+
+- id: check-03
+  kind: check
+  document:
+    {id: inv-1, kind: invoice, supplier_id: s-1, supplier_country: DE, number: "GO-4471", date: "2026-11-03",
+     iban: "DE60290617078810234465",
+     lines: [{description: "Gerüstmiete November 2026, Fassade Nord", net: 120000, vat_rate: 0.19, vat: 22800}],
+     net_total: 120000, vat_total: 22800, gross_total: 142800}
+  same_month:
+    - {id: inv-2, kind: invoice, supplier_id: s-1, supplier_country: DE, number: "GO 4471", date: "2026-11-10",
+       iban: "DE60290617078810234465",
+       lines: [{description: "Gerüstmiete November 2026, Fassade Nord", net: 120000, vat_rate: 0.19, vat: 22800}],
+       net_total: 120000, vat_total: 22800, gross_total: 142800}
+  history: []
+  booked_lines:
+    - {supplier_id: s-1, supplier_country: DE, description: "Gerüstmiete August 2026", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Gerüstmiete September 2026", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Gerüstmiete Oktober 2026", vat_rate: 0.19}
+  suppliers:
+    s-1: {iban: "DE60290617078810234465", bank_changes: []}
+  expect: {issues: []}
+  why: >-
+    The checked invoice is the original: the copy 'GO 4471' (same number after normalising) is dated a week
+    LATER (10.11.) and is the duplicate, not this one. No earlier invoice with that number exists.
+    120000 x 0.19 = 22800; 120000 + 22800 = 142800.
+
+- id: check-04
+  kind: check
+  document:
+    {id: inv-1, kind: invoice, supplier_id: s-1, supplier_country: DE, number: "MH-10261", date: "2026-12-07",
+     iban: "DE91330701200217455983",
+     lines: [{description: "Bewirtung Kundenabend 27.11.2026, 70 Personen", net: 154000, vat_rate: 0.19, vat: 29260}],
+     net_total: 154000, vat_total: 29260, gross_total: 183260}
+  same_month:
+    - {id: inv-0, kind: invoice, supplier_id: s-1, supplier_country: DE, number: "MH-10233", date: "2026-12-01",
+       iban: "DE91330701200217455983",
+       lines: [{description: "Bewirtung Kundenabend 27.11.2026, 70 Personen", net: 154000, vat_rate: 0.19, vat: 29260}],
+       net_total: 154000, vat_total: 29260, gross_total: 183260}
+  history: []
+  booked_lines:
+    - {supplier_id: s-1, supplier_country: DE, description: "Bewirtung Sommerfest", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Bewirtung Workshop", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Bewirtung Betriebsversammlung", vat_rate: 0.19}
+  suppliers:
+    s-1: {iban: "DE91330701200217455983", bank_changes: []}
+  expect: {issues: [duplicate]}
+  why: >-
+    Different numbers (MH-10233 vs MH-10261) but the same supplier billed the same gross 183260 with the same line
+    description 6 days earlier (01.12. -> 07.12.), within 14 days: this later invoice is the duplicate.
+    154000 x 0.19 = 29260; 154000 + 29260 = 183260.
+
+- id: check-05
+  kind: check
+  document:
+    {id: inv-1, kind: invoice, supplier_id: s-1, supplier_country: DE, number: "PQ-2026-11-0042", date: "2026-11-15",
+     iban: "DE66540900300100938476",
+     lines: [{description: "Lizenz Teamplan 10 Nutzer", net: 10000, vat_rate: 0.19, vat: 1900}],
+     net_total: 10000, vat_total: 1900, gross_total: 11900}
+  same_month: []
+  history:
+    - {id: h-1, kind: invoice, supplier_id: s-1, supplier_country: DE, number: "PQ-2026-10-0042", date: "2026-10-15",
+       iban: "DE66540900300100938476",
+       lines: [{description: "Lizenz Teamplan 10 Nutzer", net: 10000, vat_rate: 0.19, vat: 1900}],
+       net_total: 10000, vat_total: 1900, gross_total: 11900}
+    - {id: h-2, kind: invoice, supplier_id: s-1, supplier_country: DE, number: "PQ-2026-09-0042", date: "2026-09-15",
+       iban: "DE66540900300100938476",
+       lines: [{description: "Lizenz Teamplan 10 Nutzer", net: 10000, vat_rate: 0.19, vat: 1900}],
+       net_total: 10000, vat_total: 1900, gross_total: 11900}
+  booked_lines:
+    - {supplier_id: s-1, supplier_country: DE, description: "Lizenz Teamplan 10 Nutzer", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Lizenz Teamplan 10 Nutzer", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Lizenz Teamplan 10 Nutzer", vat_rate: 0.19}
+  suppliers:
+    s-1: {iban: "DE66540900300100938476", bank_changes: []}
+  expect: {issues: []}
+  why: >-
+    Monthly subscription with the same amount and description but different numbers: 'pq2026110042' -> 'pq20261142'
+    differs from 'pq20261042' and 'pq2026942'; the previous invoice is 31 days earlier (15.10. -> 15.11.), more than
+    14. Not a duplicate. 10000 x 0.19 = 1900; 10000 + 1900 = 11900.
+
+- id: check-06
+  kind: check
+  document:
+    {id: inv-1, kind: invoice, supplier_id: s-1, supplier_country: DE, number: "GW-88164", date: "2026-12-11",
+     iban: "DE28630501400559201388",
+     lines: [{description: "Unterhaltsreinigung KW 50", net: 38500, vat_rate: 0.19, vat: 7315}],
+     net_total: 38500, vat_total: 7315, gross_total: 45815}
+  same_month:
+    - {id: inv-0, kind: invoice, supplier_id: s-1, supplier_country: DE, number: "GW-88120", date: "2026-12-04",
+       iban: "DE28630501400559201388",
+       lines: [{description: "Unterhaltsreinigung KW 49", net: 38500, vat_rate: 0.19, vat: 7315}],
+       net_total: 38500, vat_total: 7315, gross_total: 45815}
+  history: []
+  booked_lines:
+    - {supplier_id: s-1, supplier_country: DE, description: "Unterhaltsreinigung KW 46", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Unterhaltsreinigung KW 47", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Unterhaltsreinigung KW 48", vat_rate: 0.19}
+  suppliers:
+    s-1: {iban: "DE28630501400559201388", bank_changes: []}
+  expect: {issues: []}
+  why: >-
+    Weekly cleaning: same gross 45815 seven days apart, different numbers, but the line descriptions differ (KW 49
+    vs KW 50), so the 'same gross and same descriptions within 14 days' rule does not apply. Clean.
+    38500 x 0.19 = 7315; 38500 + 7315 = 45815.
+
+- id: check-07
+  kind: check
+  document:
+    {id: inv-1, kind: invoice, supplier_id: s-1, supplier_country: DE, number: "2026-312", date: "2026-11-09",
+     iban: "DE47860207600320477619",
+     lines: [{description: "Statische Berechnung Halle 3 (korrigiert)", net: 235000, vat_rate: 0.19, vat: 44650}],
+     net_total: 235000, vat_total: 44650, gross_total: 279650}
+  same_month: []
+  history:
+    - {id: h-1, kind: invoice, supplier_id: s-1, supplier_country: DE, number: "2026-312", date: "2026-11-02",
+       iban: "DE47860207600320477619",
+       lines: [{description: "Statische Berechnung Halle 3", net: 250000, vat_rate: 0.19, vat: 47500}],
+       net_total: 250000, vat_total: 47500, gross_total: 297500}
+  booked_lines:
+    - {supplier_id: s-1, supplier_country: DE, description: "Statische Berechnung Halle 1", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Statische Berechnung Halle 2", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Statische Berechnung Halle 3", vat_rate: 0.19}
+  suppliers:
+    s-1: {iban: "DE47860207600320477619", bank_changes: []}
+  expect: {issues: [duplicate]}
+  why: >-
+    A 'corrected' invoice that reuses the number '2026-312' of an earlier invoice from the same supplier, with a
+    different amount: the number rule alone makes it a duplicate (the amount need not match). The supplier should
+    have issued a credit note and a new number. 235000 x 0.19 = 44650; 235000 + 44650 = 279650.
+
+- id: check-08
+  kind: check
+  document:
+    {id: inv-1, kind: invoice, supplier_id: s-1, supplier_country: DE, number: "SA-26-7781", date: "2026-12-03",
+     iban: "DE43700503001234098765",
+     lines: [{description: "Fracht Hamburg–München, 2 Lademeter", net: 87000, vat_rate: 0.19, vat: 16530}],
+     net_total: 87000, vat_total: 16530, gross_total: 103530}
+  same_month: []
+  history: []
+  booked_lines:
+    - {supplier_id: s-1, supplier_country: DE, description: "Fracht Hamburg–Köln", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Fracht Bremen–München", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Fracht Hamburg–München", vat_rate: 0.19}
+  suppliers:
+    s-1: {iban: "DE43700503001234098765",
+          bank_changes: [{old_iban: "DE18513900410007731552", new_iban: "DE43700503001234098765", verified_at: "2026-12-10"}]}
+  expect: {issues: [iban_changed]}
+  why: >-
+    The invoice (03.12.) already carries the new account, but the change was only verified on 10.12.; on the
+    invoice date the account on file was still the old DE1851... So the invoice's account is not the one on file.
+    87000 x 0.19 = 16530; 87000 + 16530 = 103530.
+
+- id: check-09
+  kind: check
+  document:
+    {id: inv-1, kind: invoice, supplier_id: s-1, supplier_country: DE, number: "MK-2026-0590", date: "2026-12-10",
+     iban: "DE07441225903349001276",
+     lines: [{description: "Geländer Treppenhaus, Montage", net: 412000, vat_rate: 0.19, vat: 78280}],
+     net_total: 412000, vat_total: 78280, gross_total: 490280}
+  same_month: []
+  history: []
+  booked_lines:
+    - {supplier_id: s-1, supplier_country: DE, description: "Geländer Laderampe", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Geländer Empore", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Geländer Außentreppe", vat_rate: 0.19}
+  suppliers:
+    s-1: {iban: "DE07441225903349001276",
+          bank_changes: [{old_iban: "DE21260615100045098123", new_iban: "DE07441225903349001276", verified_at: "2026-12-10"}]}
+  expect: {issues: []}
+  why: >-
+    The new account was verified on 10.12., the invoice date itself; a change counts from the day it was verified,
+    so the new account is on file for this invoice. 412000 x 0.19 = 78280; 412000 + 78280 = 490280.
+
+- id: check-10
+  kind: check
+  document:
+    {id: inv-1, kind: invoice, supplier_id: s-1, supplier_country: DE, number: "DH-55102", date: "2026-11-18",
+     iban: "DE69140601110612204983",
+     lines: [{description: "Broschüren A5, 2.000 Stück", net: 96000, vat_rate: 0.19, vat: 18240}],
+     net_total: 96000, vat_total: 18240, gross_total: 114240}
+  same_month: []
+  history:
+    - {id: h-1, kind: invoice, supplier_id: s-1, supplier_country: DE, number: "DH-54870", date: "2026-09-14",
+       iban: "DE12820655220090817734",
+       lines: [{description: "Broschüren A4, 1.000 Stück", net: 88000, vat_rate: 0.19, vat: 16720}],
+       net_total: 88000, vat_total: 16720, gross_total: 104720}
+  booked_lines:
+    - {supplier_id: s-1, supplier_country: DE, description: "Broschüren A4, 1.000 Stück", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Broschüren A6", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Broschüren Messe", vat_rate: 0.19}
+  suppliers:
+    s-1: {iban: "DE69140601110612204983",
+          bank_changes: [{old_iban: "DE12820655220090817734", new_iban: "DE69140601110612204983", verified_at: "2026-10-01"}]}
+  expect: {issues: []}
+  why: >-
+    Looks suspicious (the last invoice was paid to a different account) but the change to DE6914... was verified on
+    01.10.2026, before the invoice date 18.11.2026: not a finding. 96000 x 0.19 = 18240; 96000 + 18240 = 114240.
+
+- id: check-11
+  kind: check
+  document:
+    {id: inv-1, kind: invoice, supplier_id: s-1, supplier_country: DE, number: "LT/2026/1187", date: "2026-11-20",
+     iban: "DE06604505000000781243",
+     lines: [{description: "Pipettenspitzen 1000 µl, 10 Racks", net: 23900, vat_rate: 0.19, vat: 4541}],
+     net_total: 23900, vat_total: 4541, gross_total: 28441}
+  same_month: []
+  history: []
+  booked_lines:
+    - {supplier_id: s-1, supplier_country: DE, description: "Pipettenspitzen 200 µl", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Pipettenspitzen 1000 µl", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Pipettenspitzen 10 µl", vat_rate: 0.19}
+  suppliers:
+    s-1: {iban: "DE61380716224470215598",
+          bank_changes: [{old_iban: "DE06604505000000781243", new_iban: "DE61380716224470215598", verified_at: "2026-11-05"}]}
+  expect: {issues: [iban_changed]}
+  why: >-
+    The supplier's verified change to DE6138... took effect 05.11.2026; this invoice of 20.11.2026 still asks for
+    payment to the OLD account DE0660..., which is no longer the account on file. 23900 x 0.19 = 4541;
+    23900 + 4541 = 28441.
+
+- id: check-12
+  kind: check
+  document:
+    {id: inv-1, kind: invoice, supplier_id: s-1, supplier_country: DE, number: "WR-2026-3304", date: "2026-12-01",
+     iban: "DE55672501200805112937",
+     lines: [{description: "Akkuschrauber 18 V, 4 Stück", net: 63600, vat_rate: 0.19, vat: 12084}],
+     net_total: 63600, vat_total: 12084, gross_total: 75684}
+  same_month: []
+  history: []
+  booked_lines:
+    - {supplier_id: s-1, supplier_country: DE, description: "Akkuschrauber 12 V", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Akkuschrauber Ersatzakku", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Akkuschrauber 18 V", vat_rate: 0.19}
+  suppliers:
+    s-1: {iban: "DE57102205000661098273",
+          bank_changes: [{old_iban: "DE56509800770193872240", new_iban: "DE55672501200805112937", verified_at: "2026-06-15"},
+                         {old_iban: "DE55672501200805112937", new_iban: "DE57102205000661098273", verified_at: "2026-12-20"}]}
+  expect: {issues: []}
+  why: >-
+    Two verified changes: DE5650... -> DE5567... on 15.06.2026 and DE5567... -> DE5710... on 20.12.2026. On the
+    invoice date 01.12.2026 the account on file is DE5567..., which is what the invoice shows, although the master's
+    current account is already DE5710.... Clean. 63600 x 0.19 = 12084; 63600 + 12084 = 75684.
+
+- id: check-13
+  kind: check
+  document:
+    {id: inv-1, kind: invoice, supplier_id: s-1, supplier_country: DE, number: "HV-LP-1226", date: "2026-12-01",
+     iban: "DE91473206100388110592",
+     lines: [{description: "Miete Lagerhalle B, Dezember 2026", net: 210000, vat_rate: 0.19, vat: 39900}],
+     net_total: 210000, vat_total: 39900, gross_total: 249900}
+  same_month: []
+  history: []
+  booked_lines:
+    - {supplier_id: s-1, supplier_country: DE, description: "Miete Lagerhalle B, September 2026", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Miete Lagerhalle B, Oktober 2026", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Miete Lagerhalle B, November 2026", vat_rate: 0.19}
+  suppliers:
+    s-1: {iban: "DE87215306407720348811", bank_changes: []}
+  expect: {issues: [iban_changed]}
+  why: >-
+    The invoice asks for payment to DE9147..., an account that is neither on file (DE8721...) nor in any verified
+    change. 210000 x 0.19 = 39900; 210000 + 39900 = 249900.
+
+- id: check-14
+  kind: check
+  document:
+    {id: inv-1, kind: invoice, supplier_id: s-1, supplier_country: DE, number: "DA-90412", date: "2026-11-25",
+     iban: "DE96130600400912773402",
+     lines: [{description: "Toner schwarz 2er-Pack", net: 15980, vat_rate: 0.07, vat: 1119}],
+     net_total: 15980, vat_total: 1119, gross_total: 17099}
+  same_month: []
+  history: []
+  booked_lines:
+    - {supplier_id: s-1, supplier_country: DE, description: "Toner cyan", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Toner magenta", vat_rate: 0.19}
+    - {supplier_id: s-9, supplier_country: DE, description: "Toner schwarz", vat_rate: 0.19}
+    - {supplier_id: s-9, supplier_country: DE, description: "Toner gelb", vat_rate: 0.19}
+  suppliers:
+    s-1: {iban: "DE96130600400912773402", bank_changes: []}
+  expect: {issues: [vat_rate_wrong]}
+  why: >-
+    Item 'Toner' (first word). Four earlier lines from German suppliers, all at 19 %; the company has never paid 7 %
+    for toner. The arithmetic itself is right: 15980 x 0.07 = 1118.60 -> 1119; 15980 + 1119 = 17099.
+
+- id: check-15
+  kind: check
+  document:
+    {id: inv-1, kind: invoice, supplier_id: s-1, supplier_country: DE, number: "FE-2026-772", date: "2026-11-27",
+     iban: "DE34412602200074419935",
+     lines: [{description: "Catering Mittagessen Lieferung, 60 Portionen", net: 42000, vat_rate: 0.07, vat: 2940}],
+     net_total: 42000, vat_total: 2940, gross_total: 44940}
+  same_month: []
+  history: []
+  booked_lines:
+    - {supplier_id: s-1, supplier_country: DE, description: "Catering Sommerfest mit Service", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Catering Weihnachtsfeier mit Personal", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Catering Seminar mit Geschirr", vat_rate: 0.19}
+    - {supplier_id: s-8, supplier_country: DE, description: "Catering Lieferung Brötchen", vat_rate: 0.07}
+  suppliers:
+    s-1: {iban: "DE34412602200074419935", bank_changes: []}
+  expect: {issues: []}
+  why: >-
+    Item 'Catering': four earlier German lines, three at 19 % and one at 7 %. The company has paid 7 % for catering
+    before (food delivered without service), so 7 % is not a rate it has never paid. 42000 x 0.07 = 2940;
+    42000 + 2940 = 44940.
+
+- id: check-16
+  kind: check
+  document:
+    {id: inv-1, kind: invoice, supplier_id: s-1, supplier_country: DE, number: "BW-61930", date: "2026-12-04",
+     iban: "DE77723405102209183746",
+     lines: [{description: "Druckerpapier A4 500 Blatt, 5 Pakete", net: 2495, vat_rate: 0.07, vat: 175}],
+     net_total: 2495, vat_total: 175, gross_total: 2670}
+  same_month: []
+  history: []
+  booked_lines:
+    - {supplier_id: s-1, supplier_country: DE, description: "Ordner breit", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Kugelschreiber blau", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Briefumschläge DIN lang", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Heftklammern 24/6", vat_rate: 0.19}
+  suppliers:
+    s-1: {iban: "DE77723405102209183746", bank_changes: []}
+  expect: {issues: [vat_rate_wrong]}
+  why: >-
+    'Druckerpapier' was never bought before. The German supplier s-1 has charged a single rate, 19 %, on four
+    earlier lines, which sets the expectation; 7 % differs. 2495 x 0.07 = 174.65 -> 175; 2495 + 175 = 2670.
+
+- id: check-17
+  kind: check
+  document:
+    {id: inv-1, kind: invoice, supplier_id: s-1, supplier_country: DE, number: "WH-2026-1544", date: "2026-12-08",
+     iban: "DE64150520010040318891",
+     lines: [{description: "Tee Darjeeling lose, 2 kg", net: 5600, vat_rate: 0.07, vat: 392}],
+     net_total: 5600, vat_total: 392, gross_total: 5992}
+  same_month: []
+  history: []
+  booked_lines:
+    - {supplier_id: s-1, supplier_country: DE, description: "Kaffeebohnen Espresso 6 kg", vat_rate: 0.07}
+    - {supplier_id: s-1, supplier_country: DE, description: "Milch H 3,5 % 12 l", vat_rate: 0.07}
+    - {supplier_id: s-1, supplier_country: DE, description: "Pappbecher 0,2 l", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Spülmittel 5 l", vat_rate: 0.19}
+  suppliers:
+    s-1: {iban: "DE64150520010040318891", bank_changes: []}
+  expect: {issues: []}
+  why: >-
+    'Tee' was never bought before, but the supplier has charged both 7 % and 19 % on its earlier lines, so it does
+    not set a single expected rate. No basis for a VAT finding. 5600 x 0.07 = 392; 5600 + 392 = 5992.
+
+- id: check-18
+  kind: check
+  document:
+    {id: inv-1, kind: invoice, supplier_id: s-1, supplier_country: DE, number: "FG-11/2026-208", date: "2026-11-30",
+     iban: "DE29560612100611827305",
+     lines: [{description: "Bücher Steuerrecht 2027, 2 Bände", net: 8900, vat_rate: 0.07, vat: 623},
+             {description: "Schreibwaren Notizblöcke A5", net: 2400, vat_rate: 0.19, vat: 456}],
+     net_total: 11300, vat_total: 1079, gross_total: 12379}
+  same_month: []
+  history: []
+  booked_lines:
+    - {supplier_id: s-1, supplier_country: DE, description: "Bücher Handelsrecht", vat_rate: 0.07}
+    - {supplier_id: s-1, supplier_country: DE, description: "Bücher Arbeitsrecht", vat_rate: 0.07}
+    - {supplier_id: s-7, supplier_country: DE, description: "Bücher IFRS", vat_rate: 0.07}
+    - {supplier_id: s-1, supplier_country: DE, description: "Schreibwaren Textmarker", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Schreibwaren Kalender", vat_rate: 0.19}
+    - {supplier_id: s-7, supplier_country: DE, description: "Schreibwaren Mappen", vat_rate: 0.19}
+  suppliers:
+    s-1: {iban: "DE29560612100611827305", bank_changes: []}
+  expect: {issues: []}
+  why: >-
+    Mixed rates that are normal: books at 7 % and stationery at 19 %, each matching at least three earlier German
+    lines of the same item. 8900 x 0.07 = 623; 2400 x 0.19 = 456; nets 8900 + 2400 = 11300; VAT 623 + 456 = 1079;
+    11300 + 1079 = 12379.
+
+- id: check-19
+  kind: check
+  document:
+    {id: inv-1, kind: invoice, supplier_id: s-1, supplier_country: DE, number: "RZN-2026-12-017", date: "2026-12-02",
+     iban: "DE57800534020019283765",
+     lines: [{description: "Hosting Managed Server M, Dezember 2026", net: 29900, vat_rate: 0.0, vat: 0}],
+     net_total: 29900, vat_total: 0, gross_total: 29900}
+  same_month: []
+  history: []
+  booked_lines:
+    - {supplier_id: s-2, supplier_country: DE, description: "Hosting Webserver", vat_rate: 0.19}
+    - {supplier_id: s-2, supplier_country: DE, description: "Hosting Datenbank", vat_rate: 0.19}
+    - {supplier_id: s-2, supplier_country: DE, description: "Hosting Backup", vat_rate: 0.19}
+    - {supplier_id: s-3, supplier_country: IE, description: "Hosting Kubernetes cluster", vat_rate: 0.0}
+    - {supplier_id: s-3, supplier_country: IE, description: "Hosting object storage", vat_rate: 0.0}
+    - {supplier_id: s-3, supplier_country: IE, description: "Hosting CDN", vat_rate: 0.0}
+  suppliers:
+    s-1: {iban: "DE57800534020019283765", bank_changes: []}
+  expect: {issues: [vat_rate_wrong]}
+  why: >-
+    A German supplier charging 0 % for hosting. The expectation is judged from earlier lines of the item from
+    German suppliers: three, all at 19 %. The 0 % lines come from an Irish supplier under reverse charge and do not
+    count. So 0 % is a rate never paid for 'Hosting' from German suppliers. Arithmetic: 29900 x 0 = 0;
+    29900 + 0 = 29900. See README on foreign lines.
+
+- id: check-20
+  kind: check
+  document:
+    {id: inv-1, kind: invoice, supplier_id: s-1, supplier_country: AT, number: "AL-2026-0318", date: "2026-11-16",
+     iban: "AT882081500045671293",
+     lines: [{description: "Implementierung Schnittstelle Buchhaltung, 32 Stunden", net: 640000, vat_rate: 0.0, vat: 0}],
+     net_total: 640000, vat_total: 0, gross_total: 640000}
+  same_month: []
+  history: []
+  booked_lines: []
+  suppliers:
+    s-1: {iban: "AT882081500045671293", bank_changes: []}
+  expect: {issues: []}
+  why: >-
+    Reverse charge done right: an Austrian supplier invoices a service without VAT (the German company owes the
+    VAT under § 13b UStG). No VAT charged, so no reverse_charge_missing; item never bought and the supplier is not
+    German, so no VAT-rate expectation. 640000 + 0 = 640000.
+
+- id: check-21
+  kind: check
+  document:
+    {id: inv-1, kind: invoice, supplier_id: s-1, supplier_country: IE, number: "CH-IE-26-00921", date: "2026-12-01",
+     iban: "IE71WICK93115240778125",
+     lines: [{description: "Hosting Kubernetes cluster, December 2026", net: 185000, vat_rate: 0.0, vat: 0}],
+     net_total: 185000, vat_total: 0, gross_total: 185000}
+  same_month: []
+  history: []
+  booked_lines:
+    - {supplier_id: s-2, supplier_country: DE, description: "Hosting Webserver", vat_rate: 0.19}
+    - {supplier_id: s-2, supplier_country: DE, description: "Hosting Datenbank", vat_rate: 0.19}
+    - {supplier_id: s-2, supplier_country: DE, description: "Hosting Backup", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: IE, description: "Hosting Kubernetes cluster, October 2026", vat_rate: 0.0}
+    - {supplier_id: s-1, supplier_country: IE, description: "Hosting Kubernetes cluster, November 2026", vat_rate: 0.0}
+  suppliers:
+    s-1: {iban: "IE71WICK93115240778125", bank_changes: []}
+  expect: {issues: []}
+  why: >-
+    Reverse charge done right by an Irish supplier for an item ('Hosting') that German suppliers have charged 19 %
+    on three earlier lines. The contract says services from other EU countries fall under reverse charge, so a
+    0 % line from an EU supplier is correct; the VAT-rate expectation built from German suppliers' lines is read
+    as applying to German suppliers' invoices. The contract does not say this in so many words; see README.
+    185000 + 0 = 185000.
+
+- id: check-22
+  kind: check
+  document:
+    {id: inv-1, kind: invoice, supplier_id: s-1, supplier_country: NL, number: "KZ-2026-114", date: "2026-11-23",
+     iban: "NL60RVBA0417382952",
+     lines: [{description: "Beratung Datenmigration ERP, Phase 2", net: 480000, vat_rate: 0.19, vat: 91200}],
+     net_total: 480000, vat_total: 91200, gross_total: 571200}
+  same_month: []
+  history: []
+  booked_lines: []
+  suppliers:
+    s-1: {iban: "NL60RVBA0417382952", bank_changes: []}
+  expect: {issues: [reverse_charge_missing]}
+  why: >-
+    A Dutch supplier charges 19 % (German) VAT on a consulting service; it should have invoiced net under reverse
+    charge. Arithmetic is right: 480000 x 0.19 = 91200; 480000 + 91200 = 571200. Item never bought, supplier not
+    German: no VAT-rate expectation.
+
+- id: check-23
+  kind: check
+  document:
+    {id: inv-1, kind: invoice, supplier_id: s-1, supplier_country: FR, number: "TV-2026-0457", date: "2026-12-14",
+     iban: "FR7630788004120002741596312",
+     lines: [{description: "Translation of annual report FR-DE, 42 pages", net: 126000, vat_rate: 0.20, vat: 25200}],
+     net_total: 126000, vat_total: 25200, gross_total: 151200}
+  same_month: []
+  history: []
+  booked_lines: []
+  suppliers:
+    s-1: {iban: "FR7630788004120002741596312", bank_changes: []}
+  expect: {issues: [reverse_charge_missing]}
+  why: >-
+    A French supplier charges French VAT (20 %) on a service to a German company. 126000 x 0.20 = 25200;
+    126000 + 25200 = 151200 (arithmetic right).
+
+- id: check-24
+  kind: check
+  document:
+    {id: inv-1, kind: invoice, supplier_id: s-1, supplier_country: DE, number: "MB-K-2027-004", date: "2026-12-18",
+     iban: "DE89207300116610047728",
+     lines: [{description: "Standbau Messe Januar 2027, Anzahlung", net: 84034, vat_rate: 0.19, vat: 15996}],
+     net_total: 84034, vat_total: 15996, gross_total: 100030}
+  same_month: []
+  history: []
+  booked_lines:
+    - {supplier_id: s-1, supplier_country: DE, description: "Standbau Messe Mai 2026", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Standbau Messe September 2026", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Standbau Abbau", vat_rate: 0.19}
+  suppliers:
+    s-1: {iban: "DE89207300116610047728", bank_changes: []}
+  expect: {issues: [arithmetic]}
+  why: >-
+    Line VAT should be 84034 x 0.19 = 15966.46 (-> 15966); the invoice shows 15996 (transposed digits), 29.54 cents
+    off, more than one cent. Totals are consistent with the wrong line (84034 + 15996 = 100030), so only the line
+    check fails.
+
+- id: check-25
+  kind: check
+  document:
+    {id: inv-1, kind: invoice, supplier_id: s-1, supplier_country: DE, number: "QG-26-08841", date: "2026-11-30",
+     iban: "DE26684521800003198824",
+     lines: [{description: "Wasserspender Miete November 2026", net: 15555, vat_rate: 0.19, vat: 2956},
+             {description: "Mineralwasser still, 12 Kisten", net: 7188, vat_rate: 0.19, vat: 1366}],
+     net_total: 22743, vat_total: 4322, gross_total: 27065}
+  same_month: []
+  history: []
+  booked_lines:
+    - {supplier_id: s-1, supplier_country: DE, description: "Wasserspender Miete August 2026", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Wasserspender Miete September 2026", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Wasserspender Miete Oktober 2026", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Mineralwasser still", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Mineralwasser medium", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Mineralwasser classic", vat_rate: 0.19}
+  suppliers:
+    s-1: {iban: "DE26684521800003198824", bank_changes: []}
+  expect: {issues: []}
+  why: >-
+    A rounding difference, not an error. Line 1: 15555 x 0.19 = 2955.45 (-> 2955); the invoice shows 2956, 0.55 cent
+    from the exact value and 1 cent from the rounded one: not more than one cent. Line 2: 7188 x 0.19 = 1365.72 ->
+    1366. Nets 15555 + 7188 = 22743; VAT 2956 + 1366 = 4322; 22743 + 4322 = 27065. Clean.
+
+- id: check-26
+  kind: check
+  document:
+    {id: inv-1, kind: invoice, supplier_id: s-1, supplier_country: DE, number: "ES-2026-4127", date: "2026-12-09",
+     iban: "DE35390500440218837461",
+     lines: [{description: "Kabelkanal 40x60, 50 m", net: 12000, vat_rate: 0.19, vat: 2280},
+             {description: "Steckdosenleisten 6-fach, 20 Stück", net: 8500, vat_rate: 0.19, vat: 1615}],
+     net_total: 21500, vat_total: 3895, gross_total: 25395}
+  same_month: []
+  history: []
+  booked_lines:
+    - {supplier_id: s-1, supplier_country: DE, description: "Kabelkanal 20x40", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Kabelkanal 60x110", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Kabelkanal Zubehör", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Steckdosenleisten 3-fach", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Steckdosenleisten 8-fach", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Steckdosenleisten schaltbar", vat_rate: 0.19}
+  suppliers:
+    s-1: {iban: "DE35390500440218837461", bank_changes: []}
+  expect: {issues: [arithmetic]}
+  why: >-
+    Lines do not add up to the net total: 12000 + 8500 = 20500, but net_total says 21500. Line VAT is right
+    (12000 x 0.19 = 2280; 8500 x 0.19 = 1615; sum 3895 = vat_total) and 21500 + 3895 = 25395 = gross, so the gross
+    check alone would not catch it.
+
+- id: check-27
+  kind: check
+  document:
+    {id: inv-1, kind: invoice, supplier_id: s-1, supplier_country: DE, number: "SM-0094-26", date: "2026-11-12",
+     iban: "DE35431400300091827465",
+     lines: [{description: "Schließanlage Austausch 25 Zylinder", net: 50000, vat_rate: 0.19, vat: 9500}],
+     net_total: 50000, vat_total: 9500, gross_total: 59600}
+  same_month: []
+  history: []
+  booked_lines:
+    - {supplier_id: s-1, supplier_country: DE, description: "Schließanlage Erweiterung", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Schließanlage Nachschlüssel", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Schließanlage Wartung", vat_rate: 0.19}
+  suppliers:
+    s-1: {iban: "DE35431400300091827465", bank_changes: []}
+  expect: {issues: [arithmetic]}
+  why: >-
+    Net + VAT differs from gross: 50000 + 9500 = 59500, but gross_total says 59600 (100 cents too much). The line
+    (50000 x 0.19 = 9500) and the totals of net and VAT are right.
+
+- id: check-28
+  kind: check
+  document:
+    {id: inv-1, kind: invoice, supplier_id: s-1, supplier_country: DE, number: "TB 2026 4410", date: "2026-11-26",
+     iban: "DE98580501010731822094",
+     lines: [{description: "Transportbeton C25/30, 18 m³, Baustelle Ringstraße", net: 216000, vat_rate: 0.19, vat: 41040}],
+     net_total: 216000, vat_total: 41040, gross_total: 257040}
+  same_month: []
+  history:
+    - {id: h-1, kind: invoice, supplier_id: s-1, supplier_country: DE, number: "TB-2026-4410", date: "2026-11-12",
+       iban: "DE90250803101150029384",
+       lines: [{description: "Transportbeton C25/30, 18 m³, Baustelle Ringstraße", net: 216000, vat_rate: 0.19, vat: 41040}],
+       net_total: 216000, vat_total: 41040, gross_total: 257040}
+  booked_lines:
+    - {supplier_id: s-1, supplier_country: DE, description: "Transportbeton C20/25", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Transportbeton C30/37", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Transportbeton C25/30, 18 m³, Baustelle Ringstraße", vat_rate: 0.19}
+  suppliers:
+    s-1: {iban: "DE90250803101150029384", bank_changes: []}
+  expect: {issues: [duplicate, iban_changed]}
+  why: >-
+    A classic fraud pattern: the invoice of 12.11. resent on 26.11. with a different bank account. Duplicate by
+    number alone ('TB 2026 4410' and 'TB-2026-4410' both normalise to 'tb20264410'); the case does not depend on
+    whether exactly 14 days apart counts as 'within 14 days'. The account DE9858... is not on file (DE9025...) and no change
+    was verified: iban_changed. Arithmetic right: 216000 x 0.19 = 41040; 216000 + 41040 = 257040.
+
+- id: check-29
+  kind: check
+  document:
+    {id: inv-1, kind: invoice, supplier_id: s-1, supplier_country: AT, number: "BDS-2026-077", date: "2026-12-15",
+     iban: "AT263821000008812734",
+     lines: [{description: "Datenanalyse Q4 2026, Pauschale", net: 350000, vat_rate: 0.20, vat: 70000}],
+     net_total: 350000, vat_total: 70000, gross_total: 410000}
+  same_month: []
+  history: []
+  booked_lines: []
+  suppliers:
+    s-1: {iban: "AT263821000008812734", bank_changes: []}
+  expect: {issues: [reverse_charge_missing, arithmetic]}
+  why: >-
+    An Austrian supplier charges 20 % Austrian VAT on a service: reverse_charge_missing. And net + VAT is
+    350000 + 70000 = 420000, but gross says 410000: arithmetic. The line itself is right (350000 x 0.20 = 70000).
+
+- id: check-30
+  kind: check
+  document:
+    {id: inv-1, kind: invoice, supplier_id: s-1, supplier_country: DE, number: "DWO-26-3318", date: "2026-12-11",
+     iban: "DE70350601900420117385",
+     lines: [{description: "Toner cyan XL", net: 8990, vat_rate: 0.07, vat: 629}],
+     net_total: 8990, vat_total: 629, gross_total: 9691}
+  same_month: []
+  history: []
+  booked_lines:
+    - {supplier_id: s-1, supplier_country: DE, description: "Toner schwarz XL", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Toner magenta XL", vat_rate: 0.19}
+    - {supplier_id: s-1, supplier_country: DE, description: "Toner gelb XL", vat_rate: 0.19}
+  suppliers:
+    s-1: {iban: "DE70350601900420117385", bank_changes: []}
+  expect: {issues: [vat_rate_wrong, arithmetic]}
+  why: >-
+    'Toner' at 7 % where three earlier German lines are all 19 %: vat_rate_wrong. The line VAT matches its own
+    rate (8990 x 0.07 = 629.30 -> 629), but 8990 + 629 = 9619 while gross says 9691 (transposed): arithmetic.
