@@ -280,3 +280,34 @@ def test_migrations_roll_back_and_forward(ledger_db):
         .fetchone()
     )
     migrate.up(scratch)
+
+
+def test_outbox_reaches_kafka_in_order_at_least_once(ledger_db):
+    from cfa.ledger.publisher import publish_batch
+
+    url = ledger_db.replace("postgres@", "cfa_publisher:cfa_publisher@")
+
+    class Flaky:
+        def __init__(self, fail_at: int | None):
+            self.sent: list[tuple[str, str]] = []
+            self.fail_at = fail_at
+
+        def send(self, topic, key, value, headers):
+            if self.fail_at is not None and len(self.sent) == self.fail_at:
+                self.fail_at = None
+                raise RuntimeError("broker unavailable")
+            self.sent.append((topic, headers["event-id"]))
+
+    with psycopg.connect(url) as conn:
+        before = conn.execute("select count(*) from outbox where published_at is null").fetchone()[0]
+        assert before > 0  # sees every company's events, unlike the service role
+        p = Flaky(fail_at=3)
+        first = publish_batch(conn, p, limit=10)
+        assert first == {"sent": 3, "failed": 1}
+        second = publish_batch(conn, p, limit=10)
+        ids = [int(i) for _, i in p.sent]
+        assert second["failed"] == 0 and ids == sorted(ids) and len(set(ids)) == len(ids)
+        left = conn.execute("select count(*) from outbox where published_at is null").fetchone()[0]
+        assert left == before - len(ids)
+        with pytest.raises(psycopg.Error):
+            conn.execute("select count(*) from documents").fetchone()

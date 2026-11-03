@@ -36,8 +36,11 @@ def main(argv: list[str] | None = None) -> int:
     mc.add_argument("--token", required=True)
     mc.add_argument("--base-url", default="http://127.0.0.1:8090")
     r = sub.add_parser("run")
-    r.add_argument("split")
+    r.add_argument("month", help="a split (dev, test, heldout), YYYY-MM, or 'current'")
     r.add_argument("--no-llm", action="store_true")
+    r.add_argument("--ledger-url", help="call the ledger over HTTP instead of in-process")
+    pb = sub.add_parser("publish")
+    pb.add_argument("--once", action="store_true")
     e = sub.add_parser("eval")
     e.add_argument("split")
     e.add_argument("--variant", default="production")
@@ -48,6 +51,7 @@ def main(argv: list[str] | None = None) -> int:
     rl.add_argument("--no-llm", action="store_true")
     h = sub.add_parser("heldout")
     h.add_argument("set")
+    h.add_argument("--no-worse", action="store_true", help="exit 0 unless fewer cases pass than on the first run")
     a = p.parse_args(argv)
 
     if a.cmd == "build":
@@ -72,15 +76,36 @@ def main(argv: list[str] | None = None) -> int:
 
         build_server(a.token, a.base_url).run()
     elif a.cmd == "run":
+        import datetime as dt
+
         from .agents.client import Ledger
         from .agents.pipeline import run_company
         from .evals.run import tenants
         from .ledger.auth import mint
 
-        month = config.load("world")["months"]["splits"][a.split]
+        splits = config.load("world")["months"]["splits"]
+        month = splits.get(a.month) or (dt.date.today().strftime("%Y-%m") if a.month == "current" else a.month)
         for t in tenants():
-            res = run_company(Ledger.in_process(mint("agent:worker", t, "agent")), t, month, use_llm=not a.no_llm)
+            token = mint("agent:worker", t, "agent")
+            led = Ledger(token, a.ledger_url) if a.ledger_url else Ledger.in_process(token)
+            res = run_company(led, t, month, use_llm=not a.no_llm)
             print(t, res.documents, "documents,", len(res.close.entries) if res.close else 0, "close entries")
+    elif a.cmd == "publish":
+        import os
+        import time
+
+        import psycopg
+
+        from .ledger.publisher import KafkaProducer, publish_batch, publisher_url
+
+        producer = KafkaProducer(os.environ["CFA_KAFKA_BOOTSTRAP"])
+        with psycopg.connect(publisher_url()) as conn:
+            while True:
+                out = publish_batch(conn, producer)
+                print(out, flush=True)
+                if a.once:
+                    break
+                time.sleep(1 if out["sent"] else 5)
     elif a.cmd == "eval":
         from .evals.run import evaluate
 
@@ -123,6 +148,9 @@ def main(argv: list[str] | None = None) -> int:
         )
         for f in out["failures"]:
             print("  ", json.dumps(f, ensure_ascii=False))
+        if a.no_worse and out["recorded_as"] != "first_run.json":
+            first = json.loads((config.REPORTS / "heldout" / a.set / "first_run.json").read_text())
+            return 0 if out["passed"] >= first["passed"] else 1
         return 0 if not out["failures"] else 1
     return 0
 

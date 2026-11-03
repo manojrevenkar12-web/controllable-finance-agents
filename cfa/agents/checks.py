@@ -33,6 +33,11 @@ class Finding:
     line: int | None = None
 
 
+def eur(cents: int) -> str:
+    s = f"{abs(cents) / 100:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    return f"{'-' if cents < 0 else ''}{s} €"
+
+
 def normalise_number(number: str) -> str:
     parts = re.findall(r"[a-z]+|\d+", number.lower())
     return "".join(p.lstrip("0") or "0" if p.isdigit() else p for p in parts)
@@ -182,13 +187,16 @@ class Checker:
         problems = []
         for i, x in enumerate(doc["lines"]):
             if abs(round(x["net"] * float(x["vat_rate"])) - x["vat"]) > tol:
-                problems.append(f"line {i + 1} VAT {x['vat']} at {x['vat_rate']:.0%} of {x['net']}")
+                problems.append(f"line {i + 1}: VAT {eur(x['vat'])} is not {x['vat_rate']:.0%} of {eur(x['net'])}")
         if sum(x["net"] for x in doc["lines"]) != doc["net_total"]:
             problems.append("lines do not add up to the net total")
         if abs(sum(x["vat"] for x in doc["lines"]) - doc["vat_total"]) > tol:
             problems.append("line VAT does not add up to the VAT total")
         if doc["net_total"] + doc["vat_total"] != doc["gross_total"]:
-            problems.append(f"net {doc['net_total']} + VAT {doc['vat_total']} != gross {doc['gross_total']}")
+            problems.append(
+                f"net {eur(doc['net_total'])} + VAT {eur(doc['vat_total'])} = "
+                f"{eur(doc['net_total'] + doc['vat_total'])}, but the invoice says {eur(doc['gross_total'])}"
+            )
         if problems:
             return [Finding("arithmetic", doc["id"], "; ".join(problems), [{"problems": problems}])]
         return []

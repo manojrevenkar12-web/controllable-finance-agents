@@ -1,0 +1,67 @@
+name: ci
+on:
+  push:
+  pull_request:
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env: { POSTGRES_PASSWORD: postgres, POSTGRES_DB: cfa_test }
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      CFA_LLM: "off"   # model answers come from fixtures/llm_cache or the run fails
+      CFA_TEST_OWNER_URL: postgresql://postgres:postgres@localhost:5432/cfa_test
+      CFA_TEST_APP_URL: postgresql://cfa_app:cfa_app@localhost:5432/cfa_test
+      CFA_OWNER_URL: postgresql://postgres:postgres@localhost:5432/cfa_test
+      CFA_APP_URL: postgresql://cfa_app:cfa_app@localhost:5432/cfa_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv venv --python 3.12 && uv pip install -e ".[dev]"
+      - run: .venv/bin/ruff check cfa tests && .venv/bin/ruff format --check cfa tests
+      - run: .venv/bin/mypy cfa
+      - run: .venv/bin/cfa build
+      - run: .venv/bin/pytest -q
+      - name: The release gate reproduces the committed decision (model answers replayed from the cache)
+        run: |
+          .venv/bin/cfa release production
+          git diff --exit-code reports/releases/production.json
+      - name: Known-bad candidates are refused
+        run: |
+          for v in no-recency ignore-notes iban-from-history; do
+            if .venv/bin/cfa release "$v" --no-llm > /dev/null; then echo "$v should not ship"; exit 1; fi
+          done
+      - name: Held-out sets still give their recorded results
+        run: for s in heldout/*/; do .venv/bin/cfa heldout "$(basename "$s")" --no-worse; done
+
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 10 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm, cache-dependency-path: web/pnpm-lock.yaml }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint && pnpm exec tsc -b && pnpm test
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm e2e
+
+  infra:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - run: terraform fmt -check -recursive
+      - run: terraform init -backend=false && terraform validate

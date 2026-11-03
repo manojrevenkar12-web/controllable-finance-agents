@@ -7,6 +7,7 @@ never delete, never alter the schema, and is subject to row-level security.
 from __future__ import annotations
 
 import contextlib
+import os
 from pathlib import Path
 
 import psycopg
@@ -66,6 +67,12 @@ def ensure_runtime_role(owner_url: str, password: str) -> None:
                     )
                 )
         grant(conn)
+        publisher_pw = os.environ.get("CFA_PUBLISHER_PASSWORD", "cfa_publisher")
+        conn.execute(f"alter role cfa_publisher login password {quoted_pw(publisher_pw)}")
+
+
+def quoted_pw(pw: str) -> str:
+    return "'" + pw.replace("'", "''") + "'"
 
 
 def grant(conn: psycopg.Connection) -> None:

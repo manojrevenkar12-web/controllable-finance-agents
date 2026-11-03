@@ -702,5 +702,71 @@ def audit_log(p: Caller, subject: str | None = None, limit: Annotated[int, Query
         return c.execute(sql + " order by id desc limit %s", [*args, limit]).fetchall()
 
 
+# ------------------------------------------------------------------------------------------- console
+
+
+class SignIn(BaseModel):
+    person_id: str
+
+
+@app.post("/api/dev/sign-in")
+def dev_sign_in(body: SignIn) -> dict:
+    """Development only: a token for a seeded person, so the console can be tried without an identity provider."""
+    if os.environ.get("CFA_ENV", "development") == "production":
+        raise Problem(404, "Not found")
+    tenant = body.person_id.rsplit("-u", 1)[0]
+    p = Principal("dev-sign-in", tenant, "admin")
+    with tx(p) as c:
+        person = c.execute("select id, name, department, role from people where id = %s", (body.person_id,)).fetchone()
+    if not person:
+        raise Problem(404, "No such person")
+    from .auth import mint
+
+    return {
+        "token": mint(person["id"], tenant, person["role"], person["department"]),
+        "person": person,
+        "tenant": tenant,
+    }
+
+
+@app.get("/api/dev/people")
+def dev_people(tenant: str) -> list[dict]:
+    """Development only: whom one can sign in as."""
+    if os.environ.get("CFA_ENV", "development") == "production":
+        raise Problem(404, "Not found")
+    with tx(Principal("dev-sign-in", tenant, "admin")) as c:
+        return c.execute(
+            "select id, name, department, role from people where role in ('accountant', 'admin', 'employee', 'approver') "
+            "order by case role when 'accountant' then 0 when 'admin' then 1 when 'approver' then 2 else 3 end, id"
+        ).fetchall()
+
+
+@app.get("/api/quality")
+def quality(p: Caller) -> dict:
+    """The latest evaluation reports and release decisions (produced by `cfa eval` / `cfa release`)."""
+    if p.role not in ("accountant", "admin"):
+        raise Problem(403, "Not allowed")
+    reports = config.REPORTS
+    evals = [json.loads(f.read_text()) for f in sorted((reports / "evals").glob("*/*.json"))]
+    releases = [json.loads(f.read_text()) for f in sorted((reports / "releases").glob("*.json"))]
+    for e in evals:
+        e["close"].pop("near_misses", None)
+    return {"evals": evals, "releases": releases}
+
+
 def dumps(x: Any) -> str:
     return json.dumps(x, ensure_ascii=False, default=str)
+
+
+_dist = config.ROOT / "web" / "dist"
+if _dist.exists():
+    from fastapi.responses import FileResponse
+    from fastapi.staticfiles import StaticFiles
+
+    app.mount("/assets", StaticFiles(directory=_dist / "assets"), name="assets")
+
+    @app.get("/{path:path}", include_in_schema=False)
+    def console(path: str) -> FileResponse:
+        if path.startswith("api/"):
+            raise Problem(404, "No such endpoint")
+        return FileResponse(_dist / "index.html")

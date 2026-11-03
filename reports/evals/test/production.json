@@ -168,9 +168,9 @@
  "operational": {
   "llm_calls": 34,
   "cost_usd": 0.0351,
-  "seconds": 11.4,
-  "p50_ms_per_document": 8.610000000000001,
-  "p95_ms_per_document": 17.21,
+  "seconds": 12.7,
+  "p50_ms_per_document": 9.856,
+  "p95_ms_per_document": 18.893,
   "periods_by_rules": 56,
   "periods_by_model": 0
  }
