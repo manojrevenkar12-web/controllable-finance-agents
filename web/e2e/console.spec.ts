@@ -42,6 +42,9 @@ async function signIn(page: Page) {
 }
 
 async function accessible(page: Page) {
+  // judge the settled screen: a card halfway through its entrance has partial opacity and low contrast
+  await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== "running"));
+  await page.waitForTimeout(400);
   const r = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze();
   expect(r.violations.map((v) => `${v.id}: ${v.nodes.length}`)).toEqual([]);
 }

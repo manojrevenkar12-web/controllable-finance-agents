@@ -283,9 +283,12 @@ def test_migrations_roll_back_and_forward(ledger_db):
 
 
 def test_outbox_reaches_kafka_in_order_at_least_once(ledger_db):
+    from urllib.parse import urlsplit, urlunsplit
+
     from cfa.ledger.publisher import publish_batch
 
-    url = ledger_db.replace("postgres@", "cfa_publisher:cfa_publisher@")
+    u = urlsplit(ledger_db)
+    url = urlunsplit(u._replace(netloc="cfa_publisher:cfa_publisher@" + u.netloc.split("@", 1)[1]))
 
     class Flaky:
         def __init__(self, fail_at: int | None):
